@@ -1,0 +1,1 @@
+document.querySelector('.mobile-menu')?.addEventListener('click',()=>document.querySelector('.site-header nav').classList.toggle('open'));document.querySelectorAll('a[href]').forEach(a=>a.addEventListener('click',()=>document.querySelector('.site-header nav')?.classList.remove('open')));
