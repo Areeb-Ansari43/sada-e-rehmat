@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+Disallow: /assets/
+Sitemap: https://areeb-ansari43.github.io/sada-e-rehmat/sitemap.xml
