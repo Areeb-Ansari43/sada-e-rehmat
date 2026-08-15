@@ -101,3 +101,7 @@ body.home-page>main{padding:0!important;margin:0!important}body.home-page .hero{
 /* Final homepage hero calibration: slightly higher, still clear of the nav */
 body.home-page .hero{padding-top:175px!important}body.home-page .hero-panel{margin-top:18px!important}
 @media(max-width:760px){body.home-page .hero{padding-top:130px!important}body.home-page .hero-panel{margin-top:10px!important}}
+
+/* Final hero card fit: keep the full message, actions, and badges in the first viewport */
+body.home-page .hero{padding-top:145px!important;padding-bottom:42px!important;min-height:100svh!important}body.home-page .hero-panel{width:min(720px,calc(100% - 32px))!important;padding:30px 46px!important;margin-top:8px!important}.home-page .hero-panel h1{font-size:clamp(3rem,5.3vw,4.7rem)!important;line-height:1.02!important;margin:0 0 14px!important}.home-page .hero-panel p{font-size:15px!important;line-height:1.5!important;margin:0 auto 18px!important}.home-page .hero-panel .actions{gap:10px!important}.home-page .hero-badges{bottom:22px!important}
+@media(max-width:760px){body.home-page .hero{min-height:780px!important;padding:118px 14px 102px!important}.home-page .hero-panel{width:100%!important;padding:30px 20px!important;margin-top:8px!important}.home-page .hero-panel h1{font-size:clamp(2.75rem,13vw,3.8rem)!important;line-height:1.03!important}.home-page .hero-panel p{font-size:14px!important;line-height:1.55!important}.home-page .hero-badges{bottom:18px!important}}
