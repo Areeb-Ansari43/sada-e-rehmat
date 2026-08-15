@@ -93,3 +93,7 @@ footer{color:#45616d!important;background:linear-gradient(180deg,#f4f9f9 0%,#e8f
 /* Definitive Thank-you offset: override the global main reset */
 body.thank-you-page>main{padding:220px 24px 150px!important;min-height:860px!important;display:flex!important;align-items:flex-start!important;justify-content:center!important;box-sizing:border-box!important}.thank-you-page .thank-you-card{margin-top:22px}
 @media(max-width:760px){body.thank-you-page>main{padding:155px 16px 130px!important;min-height:800px!important}.thank-you-page .thank-you-card{margin-top:12px}}
+
+/* Definitive homepage hero structure: clear the floating navigation */
+body.home-page>main{padding:0!important;margin:0!important}body.home-page .hero{display:flex!important;align-items:flex-start!important;justify-content:center!important;min-height:100svh!important;height:auto!important;padding:210px 24px 70px!important;box-sizing:border-box!important}body.home-page .hero-panel{margin-top:26px!important;max-width:760px!important;width:min(760px,100%)!important}body.home-page .hero-badges{bottom:28px!important}
+@media(max-width:760px){body.home-page .hero{min-height:820px!important;padding:150px 16px 120px!important;align-items:flex-start!important}body.home-page .hero-panel{margin-top:16px!important;width:100%!important}.home-page .hero-panel h1{font-size:clamp(3rem,14vw,4.3rem)!important}.home-page .hero-badges{bottom:26px!important}}
