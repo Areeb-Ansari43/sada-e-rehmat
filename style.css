@@ -89,3 +89,7 @@ footer{color:#45616d!important;background:linear-gradient(180deg,#f4f9f9 0%,#e8f
 /* Thank-you placement and mobile polish */
 .thank-you-page main{min-height:760px;display:flex;align-items:flex-start;justify-content:center;padding:220px 24px 150px;box-sizing:border-box}.thank-you-card{width:min(720px,100%);box-sizing:border-box}.thank-you-page .footer-cta{margin-top:0}
 @media(max-width:760px){.thank-you-page main{min-height:760px;padding:155px 16px 130px;align-items:flex-start}.thank-you-card{padding:42px 20px;border-radius:28px}.thank-you-card h1{font-size:clamp(2.55rem,12vw,3.7rem);line-height:1.04;margin:16px 0}.thank-you-card>p{font-size:.98rem;line-height:1.65}.sent-orbit{width:88px;height:88px;margin-bottom:24px}.sent-check{width:54px;height:54px;font-size:1.6rem}.thank-you-actions{gap:10px;margin-top:26px}.thank-you-actions .btn{width:100%;min-height:48px}.thank-you-card>small{font-size:.76rem}.thank-you-page .footer-cta{margin:0 16px 110px!important}}
+
+/* Definitive Thank-you offset: override the global main reset */
+body.thank-you-page>main{padding:220px 24px 150px!important;min-height:860px!important;display:flex!important;align-items:flex-start!important;justify-content:center!important;box-sizing:border-box!important}.thank-you-page .thank-you-card{margin-top:22px}
+@media(max-width:760px){body.thank-you-page>main{padding:155px 16px 130px!important;min-height:800px!important}.thank-you-page .thank-you-card{margin-top:12px}}
