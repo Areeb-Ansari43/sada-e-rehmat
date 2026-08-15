@@ -97,3 +97,7 @@ body.thank-you-page>main{padding:220px 24px 150px!important;min-height:860px!imp
 /* Definitive homepage hero structure: clear the floating navigation */
 body.home-page>main{padding:0!important;margin:0!important}body.home-page .hero{display:flex!important;align-items:flex-start!important;justify-content:center!important;min-height:100svh!important;height:auto!important;padding:210px 24px 70px!important;box-sizing:border-box!important}body.home-page .hero-panel{margin-top:26px!important;max-width:760px!important;width:min(760px,100%)!important}body.home-page .hero-badges{bottom:28px!important}
 @media(max-width:760px){body.home-page .hero{min-height:820px!important;padding:150px 16px 120px!important;align-items:flex-start!important}body.home-page .hero-panel{margin-top:16px!important;width:100%!important}.home-page .hero-panel h1{font-size:clamp(3rem,14vw,4.3rem)!important}.home-page .hero-badges{bottom:26px!important}}
+
+/* Final homepage hero calibration: slightly higher, still clear of the nav */
+body.home-page .hero{padding-top:175px!important}body.home-page .hero-panel{margin-top:18px!important}
+@media(max-width:760px){body.home-page .hero{padding-top:130px!important}body.home-page .hero-panel{margin-top:10px!important}}
