@@ -97,8 +97,24 @@ NAV = [("index.html", "Home"), ("packages.html", "Hajj 2027"), ("gallery.html", 
        ("guides.html", "Guides"), ("about-us.html", "About")]
 
 
-def head(page, title, desc, extra=""):
+OG_MANIFEST = []
+PAGES_BUILT = []
+
+
+def slug_of(page):
+    return "home" if page == "index.html" else page[:-5]
+
+
+def head(page, title, desc, extra="", og=None, og_type="website"):
     url = BASE + ("" if page == "index.html" else page)
+    slug = slug_of(page)
+    og = og or {}
+    og_img = f"{BASE}assets/og/{slug}.jpg"
+    og_alt = escape(og.get("alt") or title)
+    if og.get("title"):
+        OG_MANIFEST.append({"slug": slug, **og})
+    else:
+        og_img = f"{BASE}assets/og/home.jpg"
     return f"""<!doctype html>
 <html lang="en-GB">
 <head>
@@ -115,14 +131,21 @@ def head(page, title, desc, extra=""):
 <link rel="icon" type="image/png" sizes="512x512" href="assets/favicon.png">
 <link rel="shortcut icon" href="assets/favicon.ico">
 <link rel="apple-touch-icon" href="assets/favicon.png">
-<meta property="og:type" content="website">
+<meta property="og:type" content="{og_type}">
 <meta property="og:site_name" content="Sada-e-Rehmat">
 <meta property="og:locale" content="en_GB">
 <meta property="og:title" content="{escape(title)}">
 <meta property="og:description" content="{escape(desc)}">
 <meta property="og:url" content="{url}">
-<meta property="og:image" content="{BASE}assets/img/kaaba-tawaf-2000.webp">
+<meta property="og:image" content="{og_img}">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="{og_alt}">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{escape(title)}">
+<meta name="twitter:description" content="{escape(desc)}">
+<meta name="twitter:image" content="{og_img}">
+<meta name="twitter:image:alt" content="{og_alt}">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Amiri&family=Instrument+Serif:ital@0;1&family=Inter+Tight:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -201,8 +224,25 @@ def footer(cta=True):
 """
 
 
-def page(fname, title, desc, body, dark_nav=False, extra_head="", cta=True):
-    html = head(fname, title, desc, extra_head) + "<body>\n" + nav(fname, dark_nav) + \
+def breadcrumbs(fname, name, parent=None):
+    items = [("Home", BASE)]
+    if parent:
+        items.append((parent[0], BASE + parent[1]))
+    items.append((name, BASE + fname))
+    return {"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [
+        {"@type": "ListItem", "position": i + 1, "name": n, "item": u} for i, (n, u) in enumerate(items)]}
+
+
+def ld(*objs):
+    return "".join(f'<script type="application/ld+json">{json.dumps(o, ensure_ascii=False)}</script>\n' for o in objs)
+
+
+def page(fname, title, desc, body, dark_nav=False, extra_head="", cta=True, og=None, crumb=None, og_type="website", index=True, priority=0.6):
+    if crumb and fname != "index.html":
+        extra_head = ld(breadcrumbs(fname, crumb[0], crumb[1] if len(crumb) > 1 else None)) + extra_head
+    if index:
+        PAGES_BUILT.append((fname, priority))
+    html = head(fname, title, desc, extra_head, og, og_type) + "<body>\n" + nav(fname, dark_nav) + \
         f'<main id="main">\n{body}\n</main>\n' + footer(cta)
     with open(os.path.join(ROOT, fname), "w", encoding="utf-8") as f:
         f.write(html)
@@ -247,24 +287,91 @@ def offices():
 </div>"""
 
 
-GUIDES = [
-    ("guide-documents", "documents", "Before you book", "Documents, passports & visas", "What to prepare before you speak to anyone, and what to ask before you pay.", "safa-marwa"),
-    ("guide-first-umrah", "first-umrah", "First-time pilgrims", "Your first Umrah", "The flow of the rites, Ihram, rest and the questions worth asking.", "kaaba-tawaf"),
-    ("guide-packing", "packing", "Practical planning", "What to pack", "A calm checklist for heat, crowds and long days on foot.", "mina-tents"),
-    ("guide-health", "health", "Health & wellbeing", "Health, heat & vaccinations", "The ACWY certificate, medication, hydration and pacing yourself.", "zamzam"),
-    ("guide-choosing", "choosing", "Choosing well", "How to compare packages", "Read past the headline price: hotels, rooms, Maktab and terms.", "maqam-ibrahim"),
-    ("guide-safety", "safety", "Travel confidence", "Avoiding scams", "How to check an operator and protect your payment.", "muzdalifah"),
-]
+from guides_a import GUIDES_A
+from guides_b import GUIDES_B
+
+ALL_GUIDES = GUIDES_A + GUIDES_B
+GUIDE = {g["slug"]: g for g in ALL_GUIDES}
+CATS = {"umrah": "Umrah", "hajj": "Hajj", "planning": "Planning", "health": "Health"}
+GUIDE_ORDER = ["guide-first-umrah", "guide-hajj-step-by-step", "guide-ihram", "guide-miqat", "guide-duas",
+               "guide-umrah-visa", "guide-hajj-uk", "guide-hajj-pakistan", "guide-women", "guide-madinah",
+               "guide-best-time-umrah", "guide-health", "guide-packing", "guide-types-of-hajj",
+               "guide-ziyarat-makkah", "guide-documents", "guide-choosing", "guide-safety"]
+UPDATED = "2026-11-19"
 
 
-def guide_cards(items):
+def strip(html):
+    return re.sub(r"<[^>]+>", "", html).replace("&amp;", "&")
+
+
+def short_title(g):
+    return strip(g["h1"]).rstrip(".")
+
+
+def guide_cards(slugs, filterable=False):
     out = []
-    for slug, anchor, eyebrow, title, text, im in items:
-        out.append(f"""<a class="guide-card" href="{slug}.html" data-reveal>
-  <div class="media">{img(im, "", "(max-width: 640px) 100vw, 33vw")}</div>
-  <div class="body"><small>{eyebrow}</small><h3>{title}</h3><p>{text}</p><span class="link">Read the guide {ARROW}</span></div>
+    for slug in slugs:
+        g = GUIDE[slug]
+        cat = f' data-cat="{g["cat"]}"' if filterable else ""
+        out.append(f"""<a class="guide-card" href="{slug}.html"{cat} data-reveal>
+  <div class="media">{img(g["image"], "", "(max-width: 640px) 100vw, 33vw")}</div>
+  <div class="body"><div class="meta"><small>{g["eyebrow"]}</small><span>{g["minutes"]} min read</span></div><h3>{short_title(g)}</h3><p>{g["og"]}</p><span class="link">Read the guide {ARROW}</span></div>
 </a>""")
     return '<div class="guide-grid" data-stagger>' + "".join(out) + "</div>"
+
+
+def scrolly(steps, dark=False, aria="Story"):
+    """steps: (label, k, h3, p, frame, facts). frame = ("img", name) | ("type", arabic, sub)."""
+    frames, items = [], []
+    for i, (label, k, h3, p, frame, facts) in enumerate(steps):
+        if frame[0] == "img":
+            frames.append(f'<div class="scrolly-frame">{img(frame[1], "", "(max-width: 860px) 100vw, 50vw")}</div>')
+        else:
+            frames.append(f'<div class="scrolly-frame type"><span class="ar" lang="ar">{frame[1]}</span><span class="sub">{frame[2]}</span></div>')
+        chips = "".join(f"<span>{f}</span>" for f in (facts or []))
+        hud = "" if frame[0] == "type" else strip(label)
+        items.append(f"""<article class="scrolly-step" data-label="{escape(hud)}">
+  <span class="k">{k}</span><h3>{h3}</h3><p>{p}</p>{f'<div class="facts">{chips}</div>' if chips else ''}
+</article>""")
+    n = len(steps)
+    return f"""<div class="scrolly" aria-label="{escape(aria)}">
+  <div class="scrolly-pin"><div class="scrolly-stage">
+    {"".join(frames)}
+    <div class="scrolly-bar" aria-hidden="true"><span></span></div>
+    <div class="scrolly-hud" aria-hidden="true"><span class="count"><b>01</b><small>/{n:02d}</small></span><span class="label"></span></div>
+  </div></div>
+  <div class="scrolly-steps">{"".join(items)}</div>
+</div>"""
+
+
+KIND_FRAME = {"arrive": ("img", "madinah"), "madinah": ("img", "madinah"), "makkah": ("img", "holy-kaaba"),
+              "aziziya": ("img", "mina-tents"), "hajj": ("img", "arafat"), "depart": ("img", "kaaba-tawaf")}
+
+
+def journey_scrolly(pkg_id, dark=False):
+    """Scrolly built from a real itinerary in data.py."""
+    p = next(x for x in PACKAGES if x["id"] == pkg_id)
+    steps = []
+    for i, st in enumerate(p["stops"]):
+        kind = st["kind"]
+        frame = KIND_FRAME[kind]
+        if kind == "arrive" and "Makkah" in st["label"]:
+            frame = ("img", "kaaba-tawaf")
+        if kind == "depart":
+            frame = ("type", "رِحْلَةٌ مُبَارَكَة", "A blessed journey home")
+        facts = [f'{st["greg"]} 2027', st["hijri"]]
+        text = {
+            "arrive": "Our team meets you at the airport and takes you to your hotel. " + ("Madinah first: no Ihram needed on the flight." if "Madinah" in st["label"] else "You land in Ihram and perform your Umrah."),
+            "madinah": f'Nights at {p["madinah"][0][0]} on {p["madinah"][1].lower()}, a short walk from Masjid an-Nabawi, with time for the Rawdah, Quba and Uhud.',
+            "makkah": (f'Nights at {p["makkah"][0][0]} on {p["makkah"][1].lower()}, beside Masjid al-Haram, so you can pray in the Haram before the days of Hajj.' if p["makkah"] else ""),
+            "aziziya": "Aziziya, close to Mina, on full board, in rooms with attached bathrooms and hot and cold drinks around the clock.",
+            "hajj": "Maktab A in Zone 1: gypsum-walled tents with sofa-beds in Mina, A/C marquees in Arafat, the Muzdalifah kit, and the shortest walk to the Jamarat.",
+            "depart": "Tawaf al-Wada' and home, " + ("from Jeddah." if "Jeddah" in st["label"] else "from Madinah, after your days at the Prophet's Mosque ﷺ."),
+        }[kind]
+        short = {"arrive": "Arrival", "madinah": "Madinah", "makkah": "Makkah", "aziziya": "Aziziya",
+                 "hajj": "The days of Hajj", "depart": "Departure"}[kind]
+        steps.append((short, f'{st["greg"]} · {st["hijri"]}', st["label"], text, frame, facts))
+    return scrolly(steps, dark, aria=f"{pkg_name(p)} itinerary")
 
 
 FAQ = [
@@ -363,6 +470,17 @@ def build_home():
   </div>
 </section>
 
+<section class="section sand" aria-label="A real Hajj 2027 itinerary">
+  <div class="wrap">
+    <div class="head head-split">
+      <div><span class="eyebrow" data-reveal>Noor 17 · Madinah first</span><h2 class="display-l" data-lines style="margin-top:18px">{lines("Seventeen days,", "<em>one at a time.</em>")}</h2></div>
+      <p class="lead" data-reveal>This is a real 2027 itinerary, exactly as we will run it. Scroll, and the journey moves with you.</p>
+    </div>
+    {journey_scrolly("noor-17-madinah")}
+    <div class="actions" style="margin-top:8px"><a class="btn" href="packages.html#noor-17-madinah">See Noor 17 {ARROW}</a><a class="btn btn-ghost" href="packages.html">Compare all twelve</a></div>
+  </div>
+</section>
+
 <section class="hs" aria-label="The five days of Hajj">
   <div class="hs-sticky">
     <div class="wrap hs-head">
@@ -439,7 +557,7 @@ def build_home():
       <div><span class="eyebrow" data-reveal>Guides</span><h2 class="display-l" data-lines style="margin-top:18px">{lines("Prepare with", "<em>a calm mind.</em>")}</h2></div>
       <p class="lead" data-reveal>Practical answers on documents, packing, health and choosing the right journey.</p>
     </div>
-    {guide_cards(GUIDES[:3])}
+    {guide_cards(["guide-first-umrah", "guide-hajj-step-by-step", "guide-umrah-visa"])}
   </div>
 </section>
 
@@ -452,7 +570,7 @@ def build_home():
 
 {cta_band("Begin your <em>Hajj 2027</em> journey.", "Places in Maktab A are limited each season. Tell us your dates and who is travelling, and we will hold the right journey for you.", "holy-kaaba")}
 """
-    ld = {
+    ld_org = {
         "@context": "https://schema.org", "@type": "TravelAgency", "name": "Sada-e-Rehmat",
         "url": BASE, "logo": BASE + "assets/sada-e-rehmat-logo.png", "image": BASE + "assets/img/kaaba-tawaf-2000.webp",
         "description": "Hajj and Umrah packages from the United Kingdom and Pakistan. Hajj 2027 Category A journeys with Maktab A in Zone 1.",
@@ -462,10 +580,14 @@ def build_home():
             {"@type": "PostalAddress", "streetAddress": "20D Mini Commercial Phase 7, Bahria Sector F Town", "addressLocality": "Rawalpindi", "postalCode": "44000", "addressCountry": "PK"}],
         "telephone": [PHONE_UK[1], PHONE_PK[1]],
     }
-    extra = f'<script type="application/ld+json">{json.dumps(ld, ensure_ascii=False)}</script>\n'
+    faq_ld = {"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [
+        {"@type": "Question", "name": q, "acceptedAnswer": {"@type": "Answer", "text": a}} for q, a in FAQ]}
+    site_ld = {"@context": "https://schema.org", "@type": "WebSite", "name": "Sada-e-Rehmat", "url": BASE, "inLanguage": "en-GB"}
     page("index.html", "Hajj 2027 & Umrah Packages from the UK and Pakistan | Sada-e-Rehmat",
          "Hajj 2027 Category A packages from the UK and Pakistan: Maktab A in Zone 1, Aziziya on full board, Swissôtel Makkah, Maysan Al Harithia Madinah and the Haramain train.",
-         body, dark_nav=True, extra_head=extra)
+         body, dark_nav=True, extra_head=ld(ld_org, site_ld, faq_ld), priority=1.0,
+         og=dict(image="kaaba-tawaf", eyebrow="Hajj 2027 · Category A", title="Hajj 2027, arranged with care.",
+                 detail="Maktab A · Zone 1 · Feltham & Rawalpindi", chips=["Sakinah", "Noor", "Rahmah", "Firdaus"], theme="hero"))
 
 
 # --------------------------------------------------------------------------
@@ -646,6 +768,15 @@ def build_packages():
   </div>
 </div>
 {"".join(secs)}
+<section class="section dark" aria-label="Inside a Firdaus journey">
+  <div class="wrap">
+    <div class="head head-split">
+      <div><span class="eyebrow" data-reveal>Firdaus 14 · Makkah first</span><h2 class="display-l" data-lines style="margin-top:18px">{lines("Four nights by the Haram,", "<em>then Hajj.</em>")}</h2></div>
+      <p class="lead" data-reveal>Our finest journey, stop by stop, with the real 2027 dates in both calendars.</p>
+    </div>
+    {journey_scrolly("firdaus-14-makkah", dark=True)}
+  </div>
+</section>
 {compare}
 {addons}
 {included}
@@ -655,7 +786,22 @@ def build_packages():
 """
     page("packages.html", "Hajj 2027 Packages: Sakinah, Noor, Rahmah & Firdaus | Sada-e-Rehmat",
          "Compare twelve Hajj 2027 Category A journeys from 10 to 23 days. Maktab A Zone 1, Swissôtel Makkah, Maysan Al Harithia and Shaza Regency Madinah. Prices in PKR and USD.",
-         body, dark_nav=True)
+         body, dark_nav=True, crumb=("Hajj 2027 packages",), priority=0.95, extra_head=ld(trips_ld()),
+         og=dict(image="holy-kaaba", eyebrow="Hajj 2027 packages", title="Twelve ways to answer the call.",
+                 detail="From Rs 21,95,000 · $7,895 per person", chips=["Sakinah", "Noor", "Rahmah", "Firdaus"], theme="packages"))
+
+
+def trips_ld():
+    items = []
+    for i, p in enumerate(PACKAGES):
+        c = COLL[p["tier"]]
+        items.append({"@type": "ListItem", "position": i + 1, "item": {
+            "@type": "TouristTrip", "name": f"{pkg_name(p)} · {route_label(p)} · Hajj 2027",
+            "description": f'{p["days"]}-day Hajj 2027 journey, {c["name"]} collection. Maktab A, Zone 1.',
+            "url": f"{BASE}packages.html#{p['id']}", "touristType": "Hajj pilgrims",
+            "offers": {"@type": "Offer", "price": p["pkr"][0], "priceCurrency": "PKR",
+                       "availability": "https://schema.org/InStock", "url": f"{BASE}packages.html#{p['id']}"}}})
+    return {"@context": "https://schema.org", "@type": "ItemList", "name": "Hajj 2027 packages", "itemListElement": items}
 
 
 # --------------------------------------------------------------------------
@@ -715,7 +861,9 @@ def build_gallery():
 """
     page("gallery.html", "Hajj & Umrah Sacred Sites | Sada-e-Rehmat",
          "Explore the sacred sites of Hajj and Umrah: the Kaaba, Mina, Arafat, Muzdalifah, the Jamarat, Maqam Ibrahim, Zamzam, Safa and Marwa and Masjid an-Nabawi.",
-         body)
+         body, crumb=("Sacred sites",), priority=0.7,
+         og=dict(image="arafat", eyebrow="Sacred sites", title="The places that call you.",
+                 detail="Ten sites, from the Kaaba to the Prophet's Mosque ﷺ", chips=["Mina", "Arafat", "Muzdalifah", "Jamarat", "Madinah"], theme="sites"))
 
 
 # --------------------------------------------------------------------------
@@ -733,7 +881,9 @@ def build_about():
              ("Confirm in writing", "Hotels, dates, rooms and terms, before any payment."),
              ("Prepare together", "Briefings on the rites, packing and health before you fly."),
              ("Travel with us", "Our team meets you and stays with your group throughout.")]
-    st = "".join(f'<div class="step" data-reveal><b>0{i+1}</b><h3>{t}</h3><p>{d}</p></div>' for i, (t, d) in enumerate(steps))
+    frames = [("type", "نِيَّة", "Intention"), ("img", "holy-kaaba"), ("type", "وَثَائِق", "Documents"),
+              ("type", "عَهْد", "In writing"), ("img", "mina-tents"), ("img", "kaaba-tawaf")]
+    about_steps = [(t, f"Step 0{i+1}", t, d, frames[i], None) for i, (t, d) in enumerate(steps)]
     team = [("D", "Director", "Sets the direction and the standard of care for every pilgrimage."),
             ("C", "Co-founder", "Building a more human, transparent way to plan sacred travel."),
             ("S", "Sohail", "Co-founder, leading operations and the pilgrim experience."),
@@ -782,7 +932,7 @@ def build_about():
       <div><span class="eyebrow" data-reveal>How it works</span><h2 class="display-l" data-lines style="margin-top:18px">{lines("From intention", "<em>to confirmation.</em>")}</h2></div>
       <p class="lead" data-reveal>Six steps, and a named person beside you at each one.</p>
     </div>
-    <div class="steps" data-stagger>{st}</div>
+    {scrolly(about_steps, dark=True, aria="How it works")}
   </div>
 </section>
 
@@ -810,7 +960,9 @@ def build_about():
 """
     page("about-us.html", "About Sada-e-Rehmat | Hajj & Umrah Specialists, UK & Pakistan",
          "Sada-e-Rehmat is a Hajj and Umrah specialist with offices in Feltham, UK and Rawalpindi, Pakistan. Twelve years, 15,000+ pilgrims, and a team with you throughout.",
-         body, dark_nav=True)
+         body, dark_nav=True, crumb=("About us",), priority=0.8,
+         og=dict(image="maqam-ibrahim", eyebrow="About Sada-e-Rehmat", title="The voice of mercy.",
+                 detail="12 years · 15,000+ pilgrims · Feltham & Rawalpindi", chips=[], theme="about"))
 
 
 # --------------------------------------------------------------------------
@@ -862,6 +1014,21 @@ def build_contact():
   </div>
 </section>
 
+<section class="section sand">
+  <div class="wrap">
+    <div class="head head-split">
+      <div><span class="eyebrow" data-reveal>After you press send</span><h2 class="display-l" data-lines style="margin-top:18px">{lines("What happens", "<em>next.</em>")}</h2></div>
+      <p class="lead" data-reveal>No call centre, no pressure. Four steps from your message to a confirmed journey.</p>
+    </div>
+    {scrolly([
+        ("Within one working day", "Step 01", "A specialist replies", "A named member of our team in Feltham or Rawalpindi reads your message and replies by phone or email, in English or Urdu.", ("type", "السَّلَامُ عَلَيْكُم", "We reply within a working day"), ["Phone or email", "English or Urdu"]),
+        ("A recommendation", "Step 02", "One journey, explained", "We recommend one journey for your dates, budget and family, and explain why, including hotels, Maktab, room sharing and what is not included.", ("img", "holy-kaaba"), ["Hotels by name", "Exclusions listed"]),
+        ("Paperwork", "Step 03", "Documents, visas and vaccines", "We give you a clear checklist: passport validity, visa route, Nusuk, and the meningitis ACWY certificate at least 10 days before arrival.", ("img", "safa-marwa"), ["Passport", "Visa", "ACWY"]),
+        ("Confirmation", "Step 04", "Everything in writing", "You receive your itinerary in Gregorian and Hijri dates, with terms, before any payment. Then we prepare you for the rites.", ("img", "kaaba-tawaf"), ["Written itinerary", "Pre-departure briefing"]),
+    ], aria="What happens after you enquire")}
+  </div>
+</section>
+
 <section class="section">
   <div class="wrap">
     <div class="head head-split">
@@ -874,71 +1041,157 @@ def build_contact():
 """
     page("contact.html", "Contact Sada-e-Rehmat | Hajj & Umrah Offices in the UK and Pakistan",
          "Enquire about Hajj 2027 or Umrah. Offices in Feltham, UK and Rawalpindi, Pakistan. Call +44 20 3002 2999 or +92 333 9999200, or email info@sada-e-rehmat.com.",
-         body)
+         body, crumb=("Contact",), priority=0.8,
+         og=dict(image="madinah", eyebrow="Contact", title="Let's plan your journey.",
+                 detail="UK +44 20 3002 2999 · Pakistan +92 333 9999200", chips=[], theme="contact"))
 
 
 # --------------------------------------------------------------------------
 # Guides
 # --------------------------------------------------------------------------
 def build_guides():
+    filt = '<div class="hub-filter" role="group" aria-label="Filter guides"><button aria-pressed="true" data-cat="all">All guides</button>' + \
+        "".join(f'<button aria-pressed="false" data-cat="{k}">{v}</button>' for k, v in CATS.items()) + "</div>"
+    plan = scrolly([
+        ("6+ months before", "Six months out", "Check passports and choose your route",
+         'Passports need six months\' validity (for Pakistan\'s Hajj 2027 scheme, until 16 November 2027). Decide Hajj or Umrah, and how you will book: <a href="guide-hajj-uk.html">Nusuk Hajj from the UK</a> or <a href="guide-hajj-pakistan.html">the scheme in Pakistan</a>.',
+         ("img", "holy-kaaba"), ["Passport", "Route"]),
+        ("3 months before", "Three months out", "Book, then apply for your visa",
+         'Compare packages by Maktab, hotels and exclusions (<a href="guide-choosing.html">our checklist</a>), then sort your <a href="guide-umrah-visa.html">visa</a> and Nusuk account.',
+         ("img", "maqam-ibrahim"), ["Package", "Visa", "Nusuk"]),
+        ("6–8 weeks before", "Six weeks out", "Vaccines and fitness",
+         'Get your meningitis ACWY vaccine (at least 10 days before arrival, ideally much earlier), and start walking every day. <a href="guide-health.html">Health guide</a>.',
+         ("img", "zamzam"), ["ACWY", "Walk daily"]),
+        ("2 weeks before", "Two weeks out", "Learn the rites and pack",
+         'Read <a href="guide-first-umrah.html">Umrah step by step</a> and <a href="guide-hajj-step-by-step.html">Hajj day by day</a>, learn the <a href="guide-duas.html">duas</a>, and work through the <a href="guide-packing.html">packing list</a>.',
+         ("img", "kaaba-tawaf"), ["Rites", "Duas", "Packing"]),
+        ("On the flight", "Travel day", "Ihram before the Miqat",
+         'If you fly to Jeddah, you must be in Ihram before landing. <a href="guide-miqat.html">Where is the Miqat on my flight?</a>',
+         ("type", "لَبَّيْكَ", "Labbayk Allāhumma ʿumrah"), ["Ihram", "Talbiyah"]),
+    ], aria="Your pilgrimage plan")
+    hub_ld = {"@context": "https://schema.org", "@type": "CollectionPage", "name": "Hajj and Umrah guides", "url": BASE + "guides.html",
+              "hasPart": [{"@type": "Article", "headline": GUIDE[g]["title"], "url": f"{BASE}{g}.html"} for g in GUIDE_ORDER]}
     body = f"""
 <section class="page-hero page-hero-plain">
   <div class="wrap" data-enter>
-    <span class="eyebrow">Guides</span>
+    <span class="eyebrow">{len(ALL_GUIDES)} guides · updated November 2026</span>
     <h1 class="display-xl" style="margin-top:18px">Prepare with <em>a calm mind.</em></h1>
-    <p class="lead">Practical Hajj and Umrah guidance for pilgrims travelling from the UK, Pakistan and beyond. Read, prepare, then talk to us about the right journey.</p>
+    <p class="lead">Practical Hajj and Umrah guides for pilgrims from the UK and Pakistan: the rites step by step, visas, Nusuk, health, packing and what to ask before you book.</p>
   </div>
 </section>
 <section class="section-tight" style="padding-top:0">
-  <div class="wrap">{guide_cards(GUIDES)}</div>
+  <div class="wrap">{filt}{guide_cards(GUIDE_ORDER, filterable=True)}</div>
+</section>
+<section class="section sand">
+  <div class="wrap">
+    <div class="head head-split">
+      <div><span class="eyebrow" data-reveal>Your plan</span><h2 class="display-l" data-lines style="margin-top:18px">{lines("From six months out", "<em>to the Miqat.</em>")}</h2></div>
+      <p class="lead" data-reveal>What to do, and when, with the guide for each step.</p>
+    </div>
+    {plan}
+  </div>
 </section>
 <section class="section">
   <div class="wrap split">
     <div class="split-copy">
       <span class="eyebrow" data-reveal>A helpful reminder</span>
       <h2 class="display-m" data-lines>{lines("Official guidance", "<em>comes first.</em>")}</h2>
-      <p data-reveal>Rules, visa routes, health requirements and Hajj booking arrangements change from season to season. Use these guides as a starting point and check the official Saudi and UK sources for your nationality and dates.</p>
-      <div class="actions" data-reveal><a class="btn btn-ghost" href="https://www.gov.uk/foreign-travel-advice/saudi-arabia" target="_blank" rel="noopener">UK travel advice ↗</a><a class="btn btn-ghost" href="https://hajj.nusuk.sa/" target="_blank" rel="noopener">Nusuk Hajj ↗</a></div>
+      <p data-reveal>Rules, visa routes, health requirements and Hajj booking arrangements change from season to season. We check our guides regularly, but always confirm with the official Saudi, UK and Pakistani sources for your passport and dates.</p>
+      <div class="actions" data-reveal><a class="btn btn-ghost" href="https://www.nusuk.sa/" target="_blank" rel="noopener">Nusuk ↗</a><a class="btn btn-ghost" href="https://www.gov.uk/foreign-travel-advice/saudi-arabia/pilgrimage" target="_blank" rel="noopener">UK FCDO ↗</a><a class="btn btn-ghost" href="https://www.mora.gov.pk/" target="_blank" rel="noopener">Pakistan MoRA ↗</a></div>
     </div>
     <div class="media" data-parallax data-clip>{img("jamarat", "Pilgrims at the Jamarat", "(max-width: 860px) 100vw, 50vw")}</div>
   </div>
 </section>
 {cta_band("Still have <em>a question?</em>", "Ask us anything about Hajj or Umrah. There's no such thing as a small question.", "muzdalifah", ("Ask our team", "contact.html"))}
 """
-    page("guides.html", "Hajj & Umrah Guides for UK and Pakistan Pilgrims | Sada-e-Rehmat",
-         "Practical Hajj and Umrah guides: documents and visas, your first Umrah, packing, health and vaccinations, comparing packages and avoiding scams.",
-         body)
+    page("guides.html", "Hajj & Umrah Guides 2026–27 | Sada-e-Rehmat",
+         "Free Hajj and Umrah guides for pilgrims from the UK and Pakistan: how to perform Umrah, Hajj day by day with 2027 dates, Ihram, Miqat, duas, visas, Nusuk, health and packing.",
+         body, crumb=("Guides",), extra_head=ld(hub_ld), priority=0.85,
+         og=dict(image="jamarat", eyebrow=f"{len(ALL_GUIDES)} free guides", title="Prepare with a calm mind.",
+                 detail="Umrah · Hajj · Visas · Duas · Health · Packing", chips=[], theme="guides"))
 
-    meta = json.load(open(os.path.join(SRC, "content", "meta.json"), encoding="utf-8"))
-    for slug, anchor, eyebrow, title, text, im in GUIDES:
-        m = meta[slug]
-        content = open(os.path.join(SRC, "content", slug + ".html"), encoding="utf-8").read()
-        content = content.replace("<section>", '<section data-reveal>')
-        others = [g for g in GUIDES if g[0] != slug][:3]
-        body = f"""
+    for g in ALL_GUIDES:
+        build_guide(g)
+
+
+def build_guide(g):
+    slug = g["slug"]
+    secs = list(g["sections"])
+    toc = [("tldr", "In short")]
+    steps_html = ""
+    if g.get("scrolly"):
+        steps_html = f'<section id="steps"><h2>Step by step</h2><div class="guide-scrolly">{scrolly(g["scrolly"], aria=strip(g["h1"]))}</div></section>'
+        toc.append(("steps", "Step by step"))
+    toc += [(sid, h) for sid, h, _ in secs]
+    if g["faqs"]:
+        toc.append(("faq", "Questions"))
+    tldr = '<div class="guide-tldr" id="tldr"><h2>In short</h2><ul>' + "".join(f"<li>{t}</li>" for t in g["tldr"]) + "</ul></div>"
+    body_secs = "".join(f'<section id="{sid}"><h2>{h}</h2>{html}</section>' for sid, h, html in secs)
+    faq_html = ""
+    if g["faqs"]:
+        faq_html = '<section id="faq"><h2>Questions</h2><div class="faq">' + "".join(
+            f'<details><summary>{q}<span class="plus" aria-hidden="true"></span></summary><div class="ans"><p>{a}</p></div></details>'
+            for q, a in g["faqs"]) + "</div></section>"
+    src = ""
+    if g["sources"]:
+        src = '<section id="sources"><h2>Sources and official links</h2><ul class="sources">' + "".join(
+            f'<li><a href="{u}" target="_blank" rel="noopener">{n}</a></li>' for n, u in g["sources"]) + \
+            '</ul><p class="sources" style="color:var(--muted)">Last checked 19 November 2026. Rules and dates can change; always confirm with official sources.</p></section>'
+    rail = "".join(f'<a href="#{i}">{t}</a>' for i, t in toc)
+    related = [r for r in g["related"] if r in GUIDE][:3]
+    url = f"{BASE}{slug}.html"
+    og_img = f"{BASE}assets/og/{slug}.jpg"
+    article = {"@context": "https://schema.org", "@type": "Article", "headline": g["title"][:110], "description": g["desc"],
+               "image": [og_img], "datePublished": UPDATED, "dateModified": UPDATED, "inLanguage": "en-GB",
+               "mainEntityOfPage": url, "articleSection": CATS[g["cat"]],
+               "author": {"@type": "Organization", "name": "Sada-e-Rehmat", "url": BASE},
+               "publisher": {"@type": "Organization", "name": "Sada-e-Rehmat", "logo": {"@type": "ImageObject", "url": BASE + "assets/img/logo-ink.png"}}}
+    lds = [article]
+    if g["faqs"]:
+        lds.append({"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [
+            {"@type": "Question", "name": q, "acceptedAnswer": {"@type": "Answer", "text": strip(a)}} for q, a in g["faqs"]]})
+    if g.get("scrolly") and slug in ("guide-first-umrah", "guide-hajj-step-by-step", "guide-hajj-uk"):
+        lds.append({"@context": "https://schema.org", "@type": "HowTo", "name": strip(g["h1"]).rstrip("."), "description": g["desc"],
+                    "image": og_img, "step": [{"@type": "HowToStep", "position": i + 1, "name": strip(st[2]), "text": strip(st[3]),
+                                               "url": f"{url}#steps"} for i, st in enumerate(g["scrolly"])]})
+    body = f"""
+<div class="read-progress" aria-hidden="true"><span></span></div>
 <section class="page-hero">
-  <div class="bg">{img(im, "", "100vw", eager=True)}</div>
+  <div class="bg">{img(g["image"], "", "100vw", eager=True)}</div>
   <div class="wrap" data-enter>
-    <span class="eyebrow" style="color:var(--gold-2)">{m['eyebrow']}</span>
-    <h1 class="display-l" style="margin-top:18px;max-width:18ch">{m['h1']}</h1>
-    <p class="lead">{m['intro']}</p>
+    <span class="eyebrow" style="color:var(--gold-2)"><a href="guides.html">Guides</a> · {g["eyebrow"]}</span>
+    <h1 class="display-l" style="margin-top:18px;max-width:16ch">{g["h1"]}</h1>
+    <p class="lead">{g["intro"]}</p>
+    <div class="guide-meta"><span>{g["minutes"]} min read</span><span>Updated 19 November 2026</span><span>{CATS[g["cat"]]}</span></div>
   </div>
 </section>
-<article class="article">
-  <div class="wrap-narrow">
-    {content}
-    <p class="note" data-reveal><strong>Important:</strong> Requirements, visa routes, health rules, prices and official booking arrangements can change. Check current official guidance for your nationality and dates before you travel.</p>
+<section class="section-tight">
+  <div class="wrap guide-layout">
+    <aside class="guide-rail">
+      <div><h4>On this page</h4><nav aria-label="On this page">{rail}</nav></div>
+      <div class="rail-card"><strong>Planning Hajj 2027?</strong><p>Maktab A, Zone 1, from Rs 21,95,000 per person.</p><a class="btn btn-sm btn-light" href="packages.html">See journeys {ARROW}</a></div>
+    </aside>
+    <article class="guide-body">
+      {tldr}
+      {steps_html}
+      {body_secs}
+      {faq_html}
+      {src}
+    </article>
   </div>
-</article>
+</section>
 <section class="section-tight sand">
   <div class="wrap">
-    <div class="head"><span class="eyebrow" data-reveal>Keep reading</span><h2 class="display-m" data-lines>{lines("More guides")}</h2></div>
-    {guide_cards(others)}
+    <div class="head"><span class="eyebrow" data-reveal>Keep reading</span><h2 class="display-m" data-lines>{lines("Related guides")}</h2></div>
+    {guide_cards(related)}
   </div>
 </section>
 {cta_band("Want help <em>planning?</em>", "Bring your dates, departure city, group size and questions. We will talk you through the right journey.", "kaaba-tawaf", ("Speak to an expert", "contact.html"), ("See Hajj 2027", "packages.html"))}
 """
-        page(slug + ".html", m["title"], m["desc"], body, dark_nav=True)
+    page(slug + ".html", g["title"] + " | Sada-e-Rehmat" if len(g["title"]) < 50 else g["title"], g["desc"], body,
+         dark_nav=True, crumb=(short_title(g), ("Guides", "guides.html")), extra_head=ld(*lds), og_type="article", priority=0.75,
+         og=dict(image=g["image"], eyebrow=f'Guide · {g["eyebrow"]}', title=short_title(g) + ".", detail=g["og"],
+                 chips=[f'{g["minutes"]} min read', CATS[g["cat"]]], theme="guide"))
 
 
 # --------------------------------------------------------------------------
@@ -967,7 +1220,8 @@ def build_policies():
   </div>
 </article>
 """
-        page(slug + ".html", m["title"], m["desc"], body, cta=False)
+        page(slug + ".html", m["title"], m["desc"], body, cta=False, crumb=(m["h1"],), priority=0.3,
+             og=dict(image="madinah", eyebrow="Sada-e-Rehmat Ltd", title=m["h1"] + ".", detail="Company no. 16043621 · England and Wales", chips=[], theme="legal"))
 
 
 def build_misc():
@@ -980,7 +1234,7 @@ def build_misc():
     <p class="lead">Your enquiry is with our pilgrimage team. A specialist will reply within one working day. If you don't hear from us, check your spam folder or email <a class="link" href="mailto:{EMAIL}">{EMAIL}</a>.</p>
     <div class="actions"><a class="btn" href="index.html">Back to home {ARROW}</a><a class="btn btn-ghost" href="packages.html">Browse Hajj 2027</a></div>
   </div>
-</section>""", cta=False)
+</section>""", cta=False, index=False)
     with open(os.path.join(ROOT, "thank-you.html")) as f:
         s = f.read().replace('<meta name="robots" content="index, follow, max-image-preview:large">', '<meta name="robots" content="noindex">')
     with open(os.path.join(ROOT, "thank-you.html"), "w") as f:
@@ -994,7 +1248,7 @@ def build_misc():
     <p class="lead">Let us guide you back.</p>
     <div class="actions"><a class="btn" href="index.html">Return home {ARROW}</a><a class="btn btn-ghost" href="contact.html">Contact our team</a></div>
   </div>
-</section>""", cta=False)
+</section>""", cta=False, index=False)
     with open(os.path.join(ROOT, "404.html")) as f:
         s = f.read().replace('<meta name="robots" content="index, follow, max-image-preview:large">', '<meta name="robots" content="noindex">')
         # absolute asset paths so the 404 renders under any missing URL
@@ -1022,3 +1276,9 @@ if __name__ == "__main__":
     build_guides()
     build_policies()
     build_misc()
+    lines_ = "".join(f"  <url><loc>{BASE}{'' if f == 'index.html' else f}</loc><lastmod>{UPDATED}</lastmod><priority>{pr}</priority></url>\n" for f, pr in PAGES_BUILT)
+    with open(os.path.join(ROOT, "sitemap.xml"), "w") as fh:
+        fh.write('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' + lines_ + "</urlset>\n")
+    with open(os.path.join(SRC, "og-manifest.json"), "w") as fh:
+        json.dump(OG_MANIFEST, fh, ensure_ascii=False, indent=1)
+    print(f"sitemap: {len(PAGES_BUILT)} urls · og manifest: {len(OG_MANIFEST)} images")

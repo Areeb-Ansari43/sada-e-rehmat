@@ -316,5 +316,64 @@
     }));
   }
 
+  /* ---------- Scrolly: pinned stage, steps scroll past ---------- */
+  $$('.scrolly').forEach(sc => {
+    const steps = $$('.scrolly-step', sc);
+    const frames = $$('.scrolly-frame', sc);
+    const count = $('.scrolly-hud .count b', sc);
+    const label = $('.scrolly-hud .label', sc);
+    const bar = $('.scrolly-bar', sc);
+    let current = -1;
+    const set = i => {
+      if (i === current || i < 0) return;
+      current = i;
+      steps.forEach((s, j) => s.classList.toggle('on', j === i));
+      const target = steps[i].dataset.frame != null ? +steps[i].dataset.frame : i;
+      frames.forEach((f, j) => f.classList.toggle('on', j === target));
+      if (count) count.textContent = String(i + 1).padStart(2, '0');
+      if (label) label.textContent = steps[i].dataset.label || '';
+    };
+    set(0);
+    const pick = () => {
+      const mid = window.innerWidth <= 860 ? vh * 0.62 : vh * 0.5;
+      let best = 0;
+      steps.forEach((s, j) => { if (s.getBoundingClientRect().top < mid) best = j; });
+      set(best);
+      if (bar) {
+        const r = sc.getBoundingClientRect();
+        bar.style.setProperty('--sp', clamp((vh * .5 - r.top) / r.height).toFixed(3));
+      }
+    };
+    window.addEventListener('scroll', () => requestAnimationFrame(pick), { passive: true });
+    pick();
+  });
+
+  /* ---------- Guides: reading progress + contents rail ---------- */
+  const rp = $('.read-progress');
+  const body = $('.guide-body');
+  if (rp && body) {
+    const links = $$('.guide-rail nav a');
+    const secs = links.map(a => $(a.getAttribute('href'))).filter(Boolean);
+    const upd = () => {
+      const r = body.getBoundingClientRect();
+      rp.style.setProperty('--rp', clamp(-r.top / (r.height - vh * .6)).toFixed(4));
+      let cur = 0;
+      secs.forEach((s, i) => { if (s.getBoundingClientRect().top < vh * .3) cur = i; });
+      links.forEach((a, i) => a.classList.toggle('active', i === cur));
+    };
+    window.addEventListener('scroll', () => requestAnimationFrame(upd), { passive: true });
+    upd();
+  }
+
+  /* ---------- Guides hub filter ---------- */
+  const hub = $('.hub-filter');
+  if (hub) {
+    $$('button', hub).forEach(b => b.addEventListener('click', () => {
+      $$('button', hub).forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+      const cat = b.dataset.cat;
+      $$('.guide-card[data-cat]').forEach(c => c.classList.toggle('is-out', cat !== 'all' && c.dataset.cat !== cat));
+    }));
+  }
+
   $$('[data-year]').forEach(el => { el.textContent = new Date().getFullYear(); });
 })();

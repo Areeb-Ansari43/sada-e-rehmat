@@ -1,0 +1,306 @@
+[
+ {
+  "slug": "home",
+  "image": "kaaba-tawaf",
+  "eyebrow": "Hajj 2027 · Category A",
+  "title": "Hajj 2027, arranged with care.",
+  "detail": "Maktab A · Zone 1 · Feltham & Rawalpindi",
+  "chips": [
+   "Sakinah",
+   "Noor",
+   "Rahmah",
+   "Firdaus"
+  ],
+  "theme": "hero"
+ },
+ {
+  "slug": "packages",
+  "image": "holy-kaaba",
+  "eyebrow": "Hajj 2027 packages",
+  "title": "Twelve ways to answer the call.",
+  "detail": "From Rs 21,95,000 · $7,895 per person",
+  "chips": [
+   "Sakinah",
+   "Noor",
+   "Rahmah",
+   "Firdaus"
+  ],
+  "theme": "packages"
+ },
+ {
+  "slug": "gallery",
+  "image": "arafat",
+  "eyebrow": "Sacred sites",
+  "title": "The places that call you.",
+  "detail": "Ten sites, from the Kaaba to the Prophet's Mosque ﷺ",
+  "chips": [
+   "Mina",
+   "Arafat",
+   "Muzdalifah",
+   "Jamarat",
+   "Madinah"
+  ],
+  "theme": "sites"
+ },
+ {
+  "slug": "about-us",
+  "image": "maqam-ibrahim",
+  "eyebrow": "About Sada-e-Rehmat",
+  "title": "The voice of mercy.",
+  "detail": "12 years · 15,000+ pilgrims · Feltham & Rawalpindi",
+  "chips": [],
+  "theme": "about"
+ },
+ {
+  "slug": "contact",
+  "image": "madinah",
+  "eyebrow": "Contact",
+  "title": "Let's plan your journey.",
+  "detail": "UK +44 20 3002 2999 · Pakistan +92 333 9999200",
+  "chips": [],
+  "theme": "contact"
+ },
+ {
+  "slug": "guides",
+  "image": "jamarat",
+  "eyebrow": "18 free guides",
+  "title": "Prepare with a calm mind.",
+  "detail": "Umrah · Hajj · Visas · Duas · Health · Packing",
+  "chips": [],
+  "theme": "guides"
+ },
+ {
+  "slug": "guide-first-umrah",
+  "image": "kaaba-tawaf",
+  "eyebrow": "Guide · Umrah · step by step",
+  "title": "How to perform Umrah, step by step.",
+  "detail": "Ihram · Tawaf · Sa'i · Halq — in order, with duas",
+  "chips": [
+   "9 min read",
+   "Umrah"
+  ],
+  "theme": "guide"
+ },
+ {
+  "slug": "guide-hajj-step-by-step",
+  "image": "arafat",
+  "eyebrow": "Guide · Hajj · day by day",
+  "title": "Hajj, day by day.",
+  "detail": "8–13 Dhul Hijjah · Arafat on Saturday 15 May 2027",
+  "chips": [
+   "11 min read",
+   "Hajj"
+  ],
+  "theme": "guide"
+ },
+ {
+  "slug": "guide-ihram",
+  "image": "holy-kaaba",
+  "eyebrow": "Guide · Rules of Ihram",
+  "title": "Ihram rules, made simple.",
+  "detail": "What men and women wear, and what changes once you say Labbayk",
+  "chips": [
+   "7 min read",
+   "Umrah"
+  ],
+  "theme": "guide"
+ },
+ {
+  "slug": "guide-miqat",
+  "image": "muzdalifah",
+  "eyebrow": "Guide · Ihram on a flight",
+  "title": "Where is the Miqat on my flight?.",
+  "detail": "Jeddah is inside the boundary — be ready before you land",
+  "chips": [
+   "6 min read",
+   "Umrah"
+  ],
+  "theme": "guide"
+ },
+ {
+  "slug": "guide-duas",
+  "image": "maqam-ibrahim",
+  "eyebrow": "Guide · Duas & dhikr",
+  "title": "Duas for Umrah and Hajj.",
+  "detail": "Talbiyah · Tawaf · Safa · Arafat — Arabic, transliteration, meaning",
+  "chips": [
+   "6 min read",
+   "Umrah"
+  ],
+  "theme": "guide"
+ },
+ {
+  "slug": "guide-types-of-hajj",
+  "image": "jamarat",
+  "eyebrow": "Guide · Tamattu', Qiran, Ifrad",
+  "title": "Three ways to perform Hajj.",
+  "detail": "Which one you'll perform, and why most pilgrims choose Tamattu'",
+  "chips": [
+   "4 min read",
+   "Hajj"
+  ],
+  "theme": "guide"
+ },
+ {
+  "slug": "guide-umrah-visa",
+  "image": "safa-marwa",
+  "eyebrow": "Guide · Visas · 2026–27 season",
+  "title": "Umrah visas, explained.",
+  "detail": "eVisa or Umrah visa, plus your free Nusuk permit",
+  "chips": [
+   "6 min read",
+   "Planning"
+  ],
+  "theme": "guide"
+ },
+ {
+  "slug": "guide-hajj-uk",
+  "image": "holy-kaaba",
+  "eyebrow": "Guide · Hajj from the UK",
+  "title": "Hajj from the UK, the official way.",
+  "detail": "One official route: register, choose, pay on Nusuk Hajj",
+  "chips": [
+   "6 min read",
+   "Hajj"
+  ],
+  "theme": "guide"
+ },
+ {
+  "slug": "guide-hajj-pakistan",
+  "image": "mina-tents",
+  "eyebrow": "Guide · Hajj from Pakistan · 2027",
+  "title": "Hajj 2027 from Pakistan.",
+  "detail": "179,210 places · government or private scheme",
+  "chips": [
+   "6 min read",
+   "Hajj"
+  ],
+  "theme": "guide"
+ },
+ {
+  "slug": "guide-women",
+  "image": "madinah",
+  "eyebrow": "Guide · For women pilgrims",
+  "title": "Umrah and Hajj for women.",
+  "detail": "Mahram rules, Ihram, periods and comfort, answered",
+  "chips": [
+   "6 min read",
+   "Umrah"
+  ],
+  "theme": "guide"
+ },
+ {
+  "slug": "guide-madinah",
+  "image": "madinah",
+  "eyebrow": "Guide · Madinah",
+  "title": "Madinah, the city of the Prophet ﷺ.",
+  "detail": "Book the Rawdah on Nusuk · Quba · Uhud · al-Baqi",
+  "chips": [
+   "6 min read",
+   "Umrah"
+  ],
+  "theme": "guide"
+ },
+ {
+  "slug": "guide-ziyarat-makkah",
+  "image": "jamarat",
+  "eyebrow": "Guide · Ziyarat in Makkah",
+  "title": "Ziyarat in Makkah.",
+  "detail": "Hira · Thawr · al-Mu'alla · Tan'eem · Arafat",
+  "chips": [
+   "5 min read",
+   "Umrah"
+  ],
+  "theme": "guide"
+ },
+ {
+  "slug": "guide-best-time-umrah",
+  "image": "zamzam",
+  "eyebrow": "Guide · When to go",
+  "title": "The best time for Umrah.",
+  "detail": "Weather, crowds, Ramadan 2027 and price, month by month",
+  "chips": [
+   "5 min read",
+   "Planning"
+  ],
+  "theme": "guide"
+ },
+ {
+  "slug": "guide-packing",
+  "image": "mina-tents",
+  "eyebrow": "Guide · Packing checklist",
+  "title": "What to pack for Umrah and Hajj.",
+  "detail": "The complete checklist, plus the Mina day bag",
+  "chips": [
+   "5 min read",
+   "Planning"
+  ],
+  "theme": "guide"
+ },
+ {
+  "slug": "guide-health",
+  "image": "zamzam",
+  "eyebrow": "Guide · Health & vaccinations",
+  "title": "Health, heat and vaccinations.",
+  "detail": "ACWY certificate · heat · medicines · after you return",
+  "chips": [
+   "6 min read",
+   "Health"
+  ],
+  "theme": "guide"
+ },
+ {
+  "slug": "guide-documents",
+  "image": "safa-marwa",
+  "eyebrow": "Guide · Documents checklist",
+  "title": "Your documents, in order.",
+  "detail": "Passport · visa · Nusuk · ACWY · insurance",
+  "chips": [
+   "4 min read",
+   "Planning"
+  ],
+  "theme": "guide"
+ },
+ {
+  "slug": "guide-choosing",
+  "image": "maqam-ibrahim",
+  "eyebrow": "Guide · Choosing a package",
+  "title": "How to compare Hajj packages.",
+  "detail": "Maktab, hotels, rooms, meals — read past the headline price",
+  "chips": [
+   "5 min read",
+   "Planning"
+  ],
+  "theme": "guide"
+ },
+ {
+  "slug": "guide-safety",
+  "image": "muzdalifah",
+  "eyebrow": "Guide · Avoiding scams",
+  "title": "Avoiding Hajj and Umrah scams.",
+  "detail": "Fake Hajj visas, unofficial payments and how to check",
+  "chips": [
+   "4 min read",
+   "Planning"
+  ],
+  "theme": "guide"
+ },
+ {
+  "slug": "privacy-policy",
+  "image": "madinah",
+  "eyebrow": "Sada-e-Rehmat Ltd",
+  "title": "Privacy & your data.",
+  "detail": "Company no. 16043621 · England and Wales",
+  "chips": [],
+  "theme": "legal"
+ },
+ {
+  "slug": "cookie-policy",
+  "image": "madinah",
+  "eyebrow": "Sada-e-Rehmat Ltd",
+  "title": "Cookie Policy.",
+  "detail": "Company no. 16043621 · England and Wales",
+  "chips": [],
+  "theme": "legal"
+ }
+]
