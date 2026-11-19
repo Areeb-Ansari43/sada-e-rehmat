@@ -218,3 +218,22 @@ TERMS = [
     ("Unused services are not refundable", "if a pilgrim chooses not to take them."),
     ("All dates are tentative", "and confirmed in writing at booking."),
 ]
+
+# ---------------------------------------------------------------------------
+# Sterling prices. The rate sheet is priced in PKR and USD; GBP is converted
+# from the USD price at USD_PER_GBP and rounded to the nearest £5. Update the
+# rate (and rebuild) when you reprice. Indicative until confirmed at booking.
+# ---------------------------------------------------------------------------
+USD_PER_GBP = 1.33
+RATE_NOTE = "£ prices are converted from US$ at $1.33 to £1 and confirmed at booking."
+
+
+def to_gbp(usd):
+    return tuple(int(round(u / USD_PER_GBP / 5.0) * 5) for u in usd)
+
+
+for _p in PACKAGES:
+    _p["gbp"] = to_gbp(_p["usd"])
+    if _p["upgrade"]:
+        _p["upgrade"]["gbp"] = to_gbp(_p["upgrade"]["usd"])
+AZIZIYA_PRIVATE["gbp"] = to_gbp(AZIZIYA_PRIVATE["usd"])

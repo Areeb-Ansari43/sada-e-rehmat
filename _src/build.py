@@ -12,7 +12,7 @@ import os
 import re
 from html import escape
 
-from data import COLLECTIONS, PACKAGES, AZIZIYA_PRIVATE, INCLUDED, TERMS
+from data import COLLECTIONS, PACKAGES, AZIZIYA_PRIVATE, INCLUDED, TERMS, RATE_NOTE
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC = os.path.dirname(os.path.abspath(__file__))
@@ -75,6 +75,10 @@ def pkr(n):
     if head:
         groups.insert(0, head)
     return "Rs " + ",".join(groups) + "," + tail
+
+
+def gbp(n):
+    return "£" + f"{n:,}"
 
 
 def usd(n):
@@ -264,7 +268,9 @@ def cta_band(title, text, img_name, primary=("Plan my Hajj", "contact.html"), se
 </section>"""
 
 
-def offices():
+def offices(maps=True):
+    map_uk = '<iframe title="Map of the Feltham office" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://www.google.com/maps?q=685+Staines+Rd%2C+Feltham+TW14+8PA%2C+United+Kingdom&amp;output=embed"></iframe>'
+    map_pk = '<iframe title="Map of the Rawalpindi office" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://www.google.com/maps?q=20D+Mini+Commercial+Phase+7%2C+Bahria+Sector+F+Town%2C+Rawalpindi%2C+44000&amp;output=embed"></iframe>'
     return f"""<div class="offices" data-stagger>
   <article class="office" data-reveal>
     <div class="office-top">
@@ -273,7 +279,7 @@ def offices():
       <p>685 Staines Road, Feltham TW14 8PA</p>
       <div class="office-links"><a class="link" href="tel:{PHONE_UK[1]}">{PHONE_UK[0]}</a><a class="link" href="https://www.google.com/maps/dir/?api=1&amp;destination=685+Staines+Rd+Feltham+TW14+8PA" target="_blank" rel="noopener">Directions ↗</a></div>
     </div>
-    <iframe title="Map of the Feltham office" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://www.google.com/maps?q=685+Staines+Rd%2C+Feltham+TW14+8PA%2C+United+Kingdom&amp;output=embed"></iframe>
+    {map_uk if maps else ""}
   </article>
   <article class="office" data-reveal>
     <div class="office-top">
@@ -282,7 +288,7 @@ def offices():
       <p>20D Mini Commercial, Phase 7, Bahria Town Sector F, Rawalpindi</p>
       <div class="office-links"><a class="link" href="tel:{PHONE_PK[1]}">{PHONE_PK[0]}</a><a class="link" href="https://www.google.com/maps/dir/?api=1&amp;destination=20D+Mini+Commercial+Phase+7+Bahria+Town+Rawalpindi" target="_blank" rel="noopener">Directions ↗</a></div>
     </div>
-    <iframe title="Map of the Rawalpindi office" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://www.google.com/maps?q=20D+Mini+Commercial+Phase+7%2C+Bahria+Sector+F+Town%2C+Rawalpindi%2C+44000&amp;output=embed"></iframe>
+    {map_pk if maps else ""}
   </article>
 </div>"""
 
@@ -398,8 +404,8 @@ def faq_block():
 def build_home():
     mins = {}
     for p in PACKAGES:
-        m = mins.setdefault(p["tier"], {"pkr": 10**12, "usd": 10**9, "days": set()})
-        m["pkr"] = min(m["pkr"], p["pkr"][0])
+        m = mins.setdefault(p["tier"], {"gbp": 10**12, "usd": 10**9, "days": set()})
+        m["gbp"] = min(m["gbp"], p["gbp"][0])
         m["usd"] = min(m["usd"], p["usd"][0])
         m["days"].add(p["days"])
 
@@ -413,29 +419,15 @@ def build_home():
     <span class="tier-ar arabic" lang="ar">{c['arabic']}</span>
     <div><span class="eyebrow">{c['meaning']}</span></div>
     <h3>{c['name']}</h3>
-    <p>{c['line']} {c['about'].split('. ')[0]}.</p>
+    <p>{c['line']}</p>
     <div class="stack-meta">{meta}</div>
     <div class="stack-price">
-      <div><small>From, per person</small><strong>{pkr(m['pkr'])}<span>≈ {usd(m['usd'])}</span></strong></div>
+      <div><small>From, per person</small><strong>{gbp(m['gbp'])}<span>≈ {usd(m['usd'])}</span></strong></div>
       <a class="btn" href="packages.html#{c['id']}">Explore {c['name']} {ARROW}</a>
     </div>
   </div>
   <div class="stack-media">{img(c['image'], "", "(max-width: 860px) 100vw, 50vw")}</div>
 </article>""")
-
-    days = [
-        ("8 Dhul Hijjah", "Mina", "mina-tents", "Gypsum-walled tents in Maktab A, Zone 1, with sofa-cum-beds, pillows, blankets and your group's own washrooms."),
-        ("9 Dhul Hijjah", "Arafat", "arafat", "Air-conditioned marquees, buffet meals and hot and cold drinks around the clock on the day that is Hajj."),
-        ("The night of the 9th", "Muzdalifah", "muzdalifah", "Carpet mats, sleeping bags and snack boxes for the night under the open sky."),
-        ("10–12 Dhul Hijjah", "Jamarat", "jamarat", "Zone 1 is the closest category to the Jamarat, so the walk on each day of stoning is the shortest it can be."),
-        ("Tawaf al-Ifadah", "The Haram", "kaaba-tawaf", "Back to the Kaaba for Tawaf and Sa'i, then rest in Aziziya rooms with attached bathrooms."),
-    ]
-    hs_items = "".join(f"""<article class="hs-item">
-  <div class="media">{img(im, place, "(max-width: 760px) 78vw, 34vw")}</div>
-  <div class="num"><span>0{i+1}</span><span>· {when}</span></div>
-  <h3>{place}</h3>
-  <p>{text}</p>
-</article>""" for i, (when, place, im, text) in enumerate(days))
 
     body = f"""
 <section class="cine" aria-label="Introduction">
@@ -456,12 +448,6 @@ def build_home():
 
 <section class="section">
   <div class="wrap">
-    <p class="lit">Sada-e-Rehmat means <em>the voice of mercy.</em> For twelve years we have helped families from the UK and Pakistan answer the call — with named hotels, honest prices and people who stay with you from the first question to the final Tawaf.</p>
-  </div>
-</section>
-
-<section class="section" style="padding-top:0">
-  <div class="wrap">
     <div class="head head-split">
       <div><span class="eyebrow" data-reveal>Hajj 2027 · Category A</span><h2 class="display-l" data-lines style="margin-top:18px">{lines("Four collections,", "<em>one standard.</em>")}</h2></div>
       <p class="lead" data-reveal>Every journey includes Maktab A in Zone 1, Aziziya on full board and the Haramain train. What changes is where you sleep, and for how long.</p>
@@ -474,48 +460,35 @@ def build_home():
   <div class="wrap">
     <div class="head head-split">
       <div><span class="eyebrow" data-reveal>Noor 17 · Madinah first</span><h2 class="display-l" data-lines style="margin-top:18px">{lines("Seventeen days,", "<em>one at a time.</em>")}</h2></div>
-      <p class="lead" data-reveal>This is a real 2027 itinerary, exactly as we will run it. Scroll, and the journey moves with you.</p>
+      <p class="lead" data-reveal>A real 2027 itinerary, stop by stop.</p>
     </div>
     {journey_scrolly("noor-17-madinah")}
-    <div class="actions" style="margin-top:8px"><a class="btn" href="packages.html#noor-17-madinah">See Noor 17 {ARROW}</a><a class="btn btn-ghost" href="packages.html">Compare all twelve</a></div>
+    <div class="actions" style="margin-top:8px"><a class="btn" href="packages.html#noor-17-madinah">See Noor 17 {ARROW}</a><a class="btn btn-ghost" href="packages.html#compare">Compare journeys</a></div>
   </div>
 </section>
 
-<section class="hs" aria-label="The five days of Hajj">
-  <div class="hs-sticky">
-    <div class="wrap hs-head">
-      <div><span class="eyebrow">The days of Hajj</span><h2 class="display-m" style="margin-top:14px">Five days. <em>Every detail held.</em></h2></div>
-      <div class="hs-progress" aria-hidden="true"><span></span></div>
-    </div>
-    <div class="hs-track">
-      {hs_items}
-      <div class="hs-item end"><p class="display-s" style="color:var(--on-dark)">All of it is in every 2027 package.</p><a class="btn btn-light" href="packages.html">Compare journeys {ARROW}</a></div>
-    </div>
-  </div>
-</section>
-
-<section class="section sand">
+<section class="section">
   <div class="wrap">
     <div class="head head-split">
       <div><span class="eyebrow" data-reveal>Included in every journey</span><h2 class="display-l" data-lines style="margin-top:18px">{lines("The comfort you", "<em>don't have to ask for.</em>")}</h2></div>
-      <p class="lead" data-reveal>Not upgrades, not extras. This is the baseline for every Sada-e-Rehmat pilgrim in 2027.</p>
+      <p class="lead" data-reveal>Standard on every 2027 journey.</p>
     </div>
     <div class="bento" data-stagger>
       <article class="tile tile-dark span-2 row-2" data-reveal>
         <span class="big" style="color:var(--gold-2)">A</span>
         <h3>Maktab A, Zone 1</h3>
-        <p>The highest service category in Mina and Arafat, in the zone closest to the Jamarat.</p>
+        <p>The top category, closest to the Jamarat.</p>
       </article>
       <article class="tile tile-photo span-4" data-reveal>
         {img("madinah", "Masjid an-Nabawi in Madinah", "(max-width: 960px) 100vw, 66vw")}
-        <div><h3>Haramain high-speed train</h3><p>Between Makkah and Madinah in under three hours, in place of the long road.</p></div>
+        <div><h3>Haramain high-speed train</h3><p>Makkah to Madinah in under three hours.</p></div>
       </article>
-      <article class="tile span-2" data-reveal><span class="ico">{icon("tent")}</span><h3>Gypsum-walled Mina tents</h3><p>Sofa-cum-beds, pillows, blankets and your group's own washrooms.</p></article>
-      <article class="tile span-2" data-reveal><span class="ico">{icon("snow")}</span><h3>A/C marquees in Arafat</h3><p>With sofa mattresses in Mina and Arafat.</p></article>
-      <article class="tile tile-gold span-3" data-reveal><span class="ico" style="background:#fff">{icon("meal")}</span><h3>Buffet meals, and drinks all day</h3><p>Buffets in Mina, Arafat and Aziziya. Hot and cold drinks and ice cream around the clock.</p></article>
-      <article class="tile span-3" data-reveal><span class="ico">{icon("bus")}</span><h3>Private air-conditioned buses</h3><p>Group coaches with built-in toilets, for every transfer.</p></article>
-      <article class="tile span-3" data-reveal><span class="ico">{icon("bath")}</span><h3>Aziziya, with attached baths</h3><p>Close to Mina for an easy commute, on full board.</p></article>
-      <article class="tile span-3" data-reveal><span class="ico">{icon("kit")}</span><h3>The Muzdalifah kit</h3><p>Carpet mats, sleeping bags and snack boxes for the night.</p></article>
+      <article class="tile span-2" data-reveal><span class="ico">{icon("tent")}</span><h3>Gypsum-walled Mina tents</h3><p>Sofa-beds and private washrooms.</p></article>
+      <article class="tile span-2" data-reveal><span class="ico">{icon("snow")}</span><h3>A/C marquees in Arafat</h3><p>Cool, with sofa mattresses.</p></article>
+      <article class="tile tile-gold span-3" data-reveal><span class="ico" style="background:#fff">{icon("meal")}</span><h3>Buffet meals, and drinks all day</h3><p>Buffets in Mina, Arafat and Aziziya, drinks 24/7.</p></article>
+      <article class="tile span-3" data-reveal><span class="ico">{icon("bus")}</span><h3>Private air-conditioned buses</h3><p>For every transfer.</p></article>
+      <article class="tile span-3" data-reveal><span class="ico">{icon("bath")}</span><h3>Aziziya, with attached baths</h3><p>Close to Mina, on full board.</p></article>
+      <article class="tile span-3" data-reveal><span class="ico">{icon("kit")}</span><h3>The Muzdalifah kit</h3><p>Mats, sleeping bags, snacks.</p></article>
     </div>
   </div>
 </section>
@@ -526,8 +499,7 @@ def build_home():
     <div class="split-copy">
       <span class="eyebrow" data-reveal>Why families choose us</span>
       <h2 class="display-m" data-lines>{lines("We name the hotel.", "<em>Then we keep our word.</em>")}</h2>
-      <p data-reveal>Every journey lists its hotels, board, room sharing and dates in writing before you pay. No "or similar". No surprise transfers. If a date moves with the moon, you hear it from us first.</p>
-      <p data-reveal>And when you land, the same team that planned your journey is on the ground with you, day and night.</p>
+      <p data-reveal>Hotels, board, rooms and dates in writing before you pay. No "or similar". And the team that plans your journey is with you on the ground.</p>
       <div data-reveal><a class="btn btn-ghost" href="about-us.html">Our story {ARROW}</a></div>
     </div>
   </div>
@@ -545,9 +517,9 @@ def build_home():
   <div class="wrap">
     <div class="head head-split">
       <div><span class="eyebrow" data-reveal>Two offices, one team</span><h2 class="display-l" data-lines style="margin-top:18px">{lines("Feltham to Rawalpindi,", "<em>then to the Haram.</em>")}</h2></div>
-      <p class="lead" data-reveal>Visit us, call us, or have a cup of tea while we go through every line of your itinerary.</p>
+      <p class="lead" data-reveal>Call in, or call us. English and Urdu.</p>
     </div>
-    {offices()}
+    {offices(maps=False)}
   </div>
 </section>
 
@@ -555,7 +527,7 @@ def build_home():
   <div class="wrap">
     <div class="head head-split">
       <div><span class="eyebrow" data-reveal>Guides</span><h2 class="display-l" data-lines style="margin-top:18px">{lines("Prepare with", "<em>a calm mind.</em>")}</h2></div>
-      <p class="lead" data-reveal>Practical answers on documents, packing, health and choosing the right journey.</p>
+      <p class="lead" data-reveal>Short, practical, and checked for 2026–27.</p>
     </div>
     {guide_cards(["guide-first-umrah", "guide-hajj-step-by-step", "guide-umrah-visa"])}
   </div>
@@ -601,38 +573,35 @@ def pkg_card(p):
     stays = []
     if p["makkah"]:
         (h, _), board = p["makkah"]
-        stays.append(("Makkah", h, board))
+        stays.append(("Makkah", h.split(" or ")[0], board))
     else:
-        stays.append(("Makkah", "Aziziya, near Mina", "Full board · shared rooms"))
+        stays.append(("Makkah", "Aziziya", "Full board"))
     (h, _), board = p["madinah"]
     stays.append(("Madinah", h, board))
-    stays.append(("Hajj days", "Maktab A · Zone 1", "Mina, Arafat, Muzdalifah"))
     dl = "".join(f'<div><dt>{a}</dt><dd>{b}<small>{x}</small></dd></div>' for a, b, x in stays)
     tl = "".join(
-        f'<li class="{s["kind"]}" style="--i:{i}"><b>{s["label"]}</b><span>{s["greg"]} 2027</span><span class="hijri">{s["hijri"]}</span></li>'
+        f'<li class="{s["kind"]}" style="--i:{i}"><b>{s["label"]}</b><span>{s["greg"]} 2027 · <span class="hijri">{s["hijri"]}</span></span></li>'
         for i, s in enumerate(p["stops"]))
     attrs = " ".join(
         f'data-{room}-{cur}="{val}"'
-        for cur in ("pkr", "usd")
+        for cur in ("gbp", "usd")
         for room, val in zip(("quad", "triple", "double"), p[cur]))
-    # dataset keys: quadPkr, quadUsd...
     first, last = p["stops"][0], p["stops"][-1]
     return f"""<article class="pkg" id="{p['id']}" data-route="{p['route']}" data-price {attrs} data-reveal>
   <div class="pkg-top">
-    <div><span class="pkg-tag">{c['name']} · {route_label(p)}</span><h3>{pkg_name(p)}</h3></div>
+    <div><span class="pkg-tag">{route_label(p)}</span><h3>{pkg_name(p)}</h3></div>
     <div class="pkg-days"><strong>{p['days']}</strong><span>days</span></div>
   </div>
   <div class="pkg-route">{icon("route")}<span><b>{first['greg']}</b> {first['label'].replace('Arrive in ', '')} → <b>{last['greg']}</b> {last['label'].replace('Depart from ', '')}</span></div>
   <dl class="pkg-stays">{dl}</dl>
   <details>
-    <summary>Day-by-day itinerary <span class="plus" aria-hidden="true"></span></summary>
+    <summary>Itinerary <span class="plus" aria-hidden="true"></span></summary>
     <ol class="timeline">{tl}</ol>
-    <p class="muted" style="font-size:14px;margin:0 0 12px">Haramain train {p['train']}. Dates may move by one day with the moon sighting.</p>
   </details>
   <div class="pkg-price">
-    <div><small class="room-label">Quad room · per person</small><div class="amount">{pkr(p['pkr'][0])}</div><div class="alt">≈ {usd(p['usd'][0])} per person</div></div>
+    <div><small class="room-label">Quad room · per person</small><div class="amount">{gbp(p['gbp'][0])}</div><div class="alt">≈ {usd(p['usd'][0])}</div></div>
   </div>
-  <div class="pkg-actions"><a class="btn" href="contact.html?package={p['id']}">Enquire {ARROW}</a></div>
+  <div class="pkg-actions"><a class="btn" href="contact.html?package={p['id']}">Enquire {ARROW}</a><button class="btn btn-ghost" type="button" data-compare="{p['id']}">Compare</button></div>
 </article>"""
 
 
@@ -641,11 +610,33 @@ def seg(name, options, label):
     return f'<div class="seg" data-name="{name}" role="group" aria-label="{label}">{btns}</div>'
 
 
+def compare_data():
+    out = []
+    for p in PACKAGES:
+        c = COLL[p["tier"]]
+        def stay(kind):
+            st = [x for x in p["stops"] if x["kind"] == kind]
+            return " & ".join(x["greg"] for x in st)
+        mk = (f'{p["makkah"][0][0].split(" or ")[0]} · {p["makkah"][1]}' if p["makkah"] else "No hotel stay (Aziziya)")
+        out.append(dict(
+            id=p["id"], name=pkg_name(p), tier=c["name"], tid=c["id"], route=route_label(p), days=p["days"] + " days",
+            arrive=f'{p["stops"][0]["greg"]} · {p["stops"][0]["label"].replace("Arrive in ", "")}',
+            depart=f'{p["stops"][-1]["greg"]} · {p["stops"][-1]["label"].replace("Depart from ", "")}',
+            makkah=mk, makkahDates=stay("makkah") or "—",
+            madinah=f'{p["madinah"][0][0]} · {p["madinah"][1]}', madinahDates=stay("madinah"),
+            aziziya=stay("aziziya"), train=p["train"],
+            gbp=list(p["gbp"]), usd=list(p["usd"]),
+            upgrade=("Maysan upgrade available" if p["upgrade"] else ("Already Maysan Al Harithia" if "Maysan" in p["madinah"][0][0] else "—")),
+        ))
+    return out
+
+
 def build_packages():
     tabs = "".join(f'<a href="#{c["id"]}" style="--dot:var(--t-{c["id"]})">{c["name"]}</a>' for c in COLLECTIONS)
+    tabs += '<a href="#compare" style="--dot:var(--gold)">Compare</a>'
     controls = (seg("route", [("all", "All"), ("madinah", "Madinah first"), ("makkah", "Makkah first")], "Route")
                 + seg("room", [("quad", "Quad"), ("triple", "Triple"), ("double", "Double")], "Room")
-                + seg("cur", [("pkr", "PKR"), ("usd", "USD")], "Currency"))
+                + seg("cur", [("gbp", "GBP"), ("usd", "USD")], "Currency"))
 
     secs = []
     for c in COLLECTIONS:
@@ -656,14 +647,13 @@ def build_packages():
   <div class="wrap">
     <div class="tier-intro">
       <div>
-        <div class="tier-word"><h2 class="display-l" data-lines>{lines(c['name'])}</h2><span class="arabic" lang="ar" data-reveal>{c['arabic']}</span></div>
-        <span class="meaning" data-reveal>{c['meaning']} · {len(pk)} journeys</span>
+        <div class="tier-word"><h2 class="display-l">{c['name']}</h2><span class="arabic" lang="ar">{c['arabic']}</span></div>
+        <span class="meaning">{c['meaning']} · {len(pk)} journeys</span>
       </div>
-      <div data-reveal><p>{c['about']}</p><div class="tier-hotels">{chips}</div></div>
+      <div data-reveal><p>{c['line']}</p><div class="tier-hotels">{chips}</div></div>
     </div>
-    <div class="tier-band media" data-parallax data-clip>{img(c['image'], "", "100vw")}</div>
     <div class="pkg-grid" data-stagger>{cards}</div>
-    <p class="empty-note">No {c['name']} journey on this route. Switch the route to <b>All</b> to see every option.</p>
+    <p class="empty-note">No {c['name']} journey on this route. Switch the route to <b>All</b>.</p>
   </div>
 </section>""")
 
@@ -671,68 +661,76 @@ def build_packages():
     for c in COLLECTIONS:
         for p in [x for x in PACKAGES if x["tier"] == c["id"]]:
             cells = "".join(
-                f'<td class="num" data-cell="{room}" data-pkr="{p["pkr"][i]}" data-usd="{p["usd"][i]}">{pkr(p["pkr"][i])}</td>'
+                f'<td class="num" data-cell="{room}" data-gbp="{p["gbp"][i]}" data-usd="{p["usd"][i]}">{gbp(p["gbp"][i])}</td>'
                 for i, room in enumerate(("quad", "triple", "double")))
             mk = p["makkah"][0][0].split(" or ")[0] if p["makkah"] else "Aziziya"
             rows.append(f'<tr data-route="{p["route"]}" style="--dot:var(--t-{c["id"]})"><td><i></i><a href="#{p["id"]}">{pkg_name(p)}</a></td><td>{route_label(p)}</td><td>{p["days"]} days</td><td>{p["stops"][0]["greg"]}</td><td>{mk}</td><td>{p["madinah"][0][0]}</td>{cells}</tr>')
+    opts = "".join(f'<optgroup label="{c["name"]}">' + "".join(
+        f'<option value="{p["id"]}">{pkg_name(p)} · {route_label(p)}</option>' for p in PACKAGES if p["tier"] == c["id"]) + "</optgroup>"
+        for c in COLLECTIONS)
+    defaults = ["sakinah-14-madinah", "noor-17-madinah", "firdaus-14-madinah"]
+    selects = "".join(f'<label class="cmp-pick"><span>Journey {i+1}</span><select data-slot="{i}">{opts.replace(f"value=\"{d}\"", f"value=\"{d}\" selected")}</select></label>' for i, d in enumerate(defaults))
     compare = f"""<section class="section" id="compare">
   <div class="wrap">
     <div class="head head-split">
-      <div><span class="eyebrow" data-reveal>Side by side</span><h2 class="display-l" data-lines style="margin-top:18px">{lines("Every journey,", "<em>one table.</em>")}</h2></div>
-      <p class="lead" data-reveal>Per person, excluding airfare. The route and currency you choose above apply here too.</p>
+      <div><span class="eyebrow" data-reveal>Compare</span><h2 class="display-l" data-lines style="margin-top:18px">{lines("Side by side,", "<em>line by line.</em>")}</h2></div>
+      <p class="lead" data-reveal>Pick three journeys. A gold dot marks what differs.</p>
     </div>
-    <div class="compare-wrap" data-reveal>
-      <table class="compare">
-        <thead><tr><th>Journey</th><th>Route</th><th>Length</th><th>Arrive</th><th>Makkah</th><th>Madinah</th><th class="num" data-room="quad">Quad</th><th class="num" data-room="triple">Triple</th><th class="num" data-room="double">Double</th></tr></thead>
-        <tbody>{"".join(rows)}</tbody>
-      </table>
+    <div class="cmp" data-reveal>
+      <div class="cmp-picks">{selects}</div>
+      <div class="cmp-grid" aria-live="polite"></div>
     </div>
+    <details class="all-table">
+      <summary>All twelve journeys in one table <span class="plus" aria-hidden="true"></span></summary>
+      <div class="compare-wrap">
+        <table class="compare">
+          <thead><tr><th>Journey</th><th>Route</th><th>Length</th><th>Arrive</th><th>Makkah</th><th>Madinah</th><th class="num" data-room="quad">Quad</th><th class="num" data-room="triple">Triple</th><th class="num" data-room="double">Double</th></tr></thead>
+          <tbody>{"".join(rows)}</tbody>
+        </table>
+      </div>
+    </details>
+    <p class="muted" style="font-size:14px;margin-top:20px">Per person, excluding airfare and Qurbani. {RATE_NOTE}</p>
   </div>
-</section>"""
+</section>
+<script type="application/json" id="cmp-data">{json.dumps(compare_data(), ensure_ascii=False)}</script>"""
 
     def addon_rows(d):
         return "".join(
-            f'<tr><td>{room}</td><td data-addon data-pkr="{d["pkr"][i]}" data-usd="{d["usd"][i]}">{pkr(d["pkr"][i])}</td></tr>'
+            f'<tr><td>{room}</td><td data-addon data-gbp="{d["gbp"][i]}" data-usd="{d["usd"][i]}">{gbp(d["gbp"][i])}</td></tr>'
             for i, room in enumerate(("Quad", "Triple", "Double")))
     upg = [p for p in PACKAGES if p["upgrade"]]
     upg_rows = "".join(
-        f'<tr><td><a href="#{p["id"]}">{pkg_name(p)}</a> <span class="muted">· {route_label(p)}</span></td>'
-        + "".join(f'<td data-addon data-pkr="{p["upgrade"]["pkr"][i]}" data-usd="{p["upgrade"]["usd"][i]}">{pkr(p["upgrade"]["pkr"][i])}</td>' for i in range(3))
+        f'<tr><td><a href="#{p["id"]}">{pkg_name(p)}</a> <span class="muted">· {route_label(p).split()[0]}</span></td>'
+        + "".join(f'<td data-addon data-gbp="{p["upgrade"]["gbp"][i]}" data-usd="{p["upgrade"]["usd"][i]}">{gbp(p["upgrade"]["gbp"][i])}</td>' for i in range(3))
         + '</tr>' for p in upg)
     addons = f"""<section class="section sand">
   <div class="wrap">
-    <div class="head head-split">
-      <div><span class="eyebrow" data-reveal>Make it yours</span><h2 class="display-l" data-lines style="margin-top:18px">{lines("Two upgrades,", "<em>clearly priced.</em>")}</h2></div>
-      <p class="lead" data-reveal>Added per person to the journey price, in the currency you have chosen.</p>
-    </div>
+    <div class="head"><span class="eyebrow" data-reveal>Upgrades</span><h2 class="display-m" data-lines>{lines("Make it <em>yours.</em>")}</h2></div>
     <div class="addons" data-stagger>
       <article class="addon" data-reveal>
-        <span class="eyebrow">Every journey</span>
-        <h3>A private room in Aziziya</h3>
-        <p>Aziziya rooms are shared by five pilgrims by default, gender-segregated, with an attached bathroom. Keep your family together in a room of your own.</p>
+        <h3>Private room in Aziziya</h3>
+        <p>Aziziya rooms are shared by five by default. Keep your family together.</p>
         <table><thead><tr><th>Room</th><th>Extra per person</th></tr></thead><tbody>{addon_rows(AZIZIYA_PRIVATE)}</tbody></table>
       </article>
       <article class="addon" data-reveal>
-        <span class="eyebrow">Shaza Regency journeys</span>
-        <h3>Upgrade to Maysan Al Harithia</h3>
-        <p>Move your Madinah stay to Maysan Al Harithia, on half board. Available on the journeys below.</p>
-        <table><thead><tr><th>Journey</th><th>Quad</th><th>Triple</th><th>Double</th></tr></thead><tbody>{upg_rows}</tbody></table>
+        <h3>Maysan Al Harithia, Madinah</h3>
+        <p>Upgrade from Shaza Regency, on half board.</p>
+        <div class="table-scroll"><table><thead><tr><th>Journey</th><th>Quad</th><th>Triple</th><th>Double</th></tr></thead><tbody>{upg_rows}</tbody></table></div>
       </article>
     </div>
   </div>
 </section>"""
 
-    inc = "".join(f'<li><b>{a}.</b> {b}</li>' for a, b in INCLUDED)
+    inc = "".join(f'<li><b>{a}</b><span>{b}</span></li>' for a, b in INCLUDED)
     terms = "".join(f'<li><b>{a}</b> {b}</li>' for a, b in TERMS)
     included = f"""<section class="section dark">
   <div class="wrap">
-    <div class="head head-split">
-      <div><span class="eyebrow" data-reveal>In every journey</span><h2 class="display-l" data-lines style="margin-top:18px">{lines("What's included,", "<em>and what isn't.</em>")}</h2></div>
-      <p class="lead" data-reveal>The small print, in large print. Read it before you choose.</p>
-    </div>
-    <ul class="terms" data-reveal>{inc}</ul>
-    <h3 class="display-s" style="margin:clamp(56px,7vw,96px) 0 28px" data-reveal>Good to know</h3>
-    <ul class="terms" data-reveal>{terms}</ul>
+    <div class="head"><span class="eyebrow" data-reveal>Every journey</span><h2 class="display-m" data-lines>{lines("What's <em>included.</em>")}</h2></div>
+    <ul class="inc-grid" data-reveal>{inc}</ul>
+    <details class="all-table dark-details">
+      <summary>Good to know: terms and exclusions <span class="plus" aria-hidden="true"></span></summary>
+      <ul class="terms">{terms}</ul>
+    </details>
   </div>
 </section>"""
 
@@ -740,23 +738,23 @@ def build_packages():
   <div class="wrap split">
     <div class="split-copy">
       <span class="eyebrow" data-reveal>Umrah · all year</span>
-      <h2 class="display-l" data-lines>{lines("Umrah, shaped", "<em>around your dates.</em>")}</h2>
-      <p data-reveal>Ramadan, school holidays or a quiet week in winter. Tell us when you can travel, which hotels you prefer and who is coming, and we will price it for you, usually within a day.</p>
-      <div class="facts-row" data-reveal><span class="chip chip-ink">Visa guidance</span><span class="chip chip-ink">Hotels near the Haram</span><span class="chip chip-ink">Ziyarat in Makkah & Madinah</span><span class="chip chip-ink">Family & group rooms</span></div>
+      <h2 class="display-l" data-lines>{lines("Umrah, around", "<em>your dates.</em>")}</h2>
+      <p data-reveal>Tell us when, which hotels and who's coming. We'll price it, usually within a day.</p>
       <div class="actions" data-reveal><a class="btn" href="contact.html">Ask for an Umrah quote {ARROW}</a></div>
     </div>
     <div class="media" data-parallax data-clip>{img("safa-marwa", "Pilgrims walking between Safa and Marwa", "(max-width: 860px) 100vw, 50vw")}</div>
   </div>
 </section>"""
 
+    low = min(p["gbp"][0] for p in PACKAGES)
     body = f"""
 <section class="page-hero">
   <div class="bg">{img("holy-kaaba", "The Kaaba in Masjid al-Haram", "100vw", eager=True)}</div>
   <div class="wrap" data-enter>
     <span class="eyebrow" style="color:var(--gold-2)">Hajj 2027 · Category A</span>
     <h1 class="display-xl" style="margin-top:18px">Twelve ways to <em>answer the call.</em></h1>
-    <p class="lead">Four collections, each built on Maktab A in Zone 1, Aziziya on full board and the Haramain train. Choose how long you stay, where you sleep and which holy city you see first.</p>
-    <div class="hero-facts" style="margin-top:28px"><span class="chip">10 to 23 days</span><span class="chip">28 April – 23 May 2027</span><span class="chip">Prices exclude airfare</span></div>
+    <p class="lead">Every journey: Maktab A in Zone 1, Aziziya on full board, the Haramain train.</p>
+    <div class="hero-facts" style="margin-top:28px"><span class="chip">From {gbp(low)} pp</span><span class="chip">10 to 23 days</span><span class="chip">Excludes airfare</span></div>
   </div>
 </section>
 
@@ -768,27 +766,18 @@ def build_packages():
   </div>
 </div>
 {"".join(secs)}
-<section class="section dark" aria-label="Inside a Firdaus journey">
-  <div class="wrap">
-    <div class="head head-split">
-      <div><span class="eyebrow" data-reveal>Firdaus 14 · Makkah first</span><h2 class="display-l" data-lines style="margin-top:18px">{lines("Four nights by the Haram,", "<em>then Hajj.</em>")}</h2></div>
-      <p class="lead" data-reveal>Our finest journey, stop by stop, with the real 2027 dates in both calendars.</p>
-    </div>
-    {journey_scrolly("firdaus-14-makkah", dark=True)}
-  </div>
-</section>
 {compare}
 {addons}
 {included}
 </div>
 {umrah}
-{cta_band("Not sure which <em>journey fits?</em>", "Tell us your dates, your budget and who is travelling. We will recommend one journey and explain why.", "maqam-ibrahim", ("Get a recommendation", "contact.html"), ("Read: how to compare", "guide-choosing.html"))}
+{cta_band("Not sure which <em>journey fits?</em>", "Tell us your dates and budget. We'll recommend one, and say why.", "maqam-ibrahim", ("Get a recommendation", "contact.html"), ("How to compare", "guide-choosing.html"))}
 """
-    page("packages.html", "Hajj 2027 Packages: Sakinah, Noor, Rahmah & Firdaus | Sada-e-Rehmat",
-         "Compare twelve Hajj 2027 Category A journeys from 10 to 23 days. Maktab A Zone 1, Swissôtel Makkah, Maysan Al Harithia and Shaza Regency Madinah. Prices in PKR and USD.",
+    page("packages.html", "Hajj 2027 Packages from £5,935: Sakinah, Noor, Rahmah & Firdaus | Sada-e-Rehmat",
+         "Compare twelve Hajj 2027 Category A journeys from 10 to 23 days, side by side. Maktab A Zone 1, Swissôtel Makkah, Maysan Al Harithia and Shaza Regency Madinah. Prices in GBP and USD.",
          body, dark_nav=True, crumb=("Hajj 2027 packages",), priority=0.95, extra_head=ld(trips_ld()),
          og=dict(image="holy-kaaba", eyebrow="Hajj 2027 packages", title="Twelve ways to answer the call.",
-                 detail="From Rs 21,95,000 · $7,895 per person", chips=["Sakinah", "Noor", "Rahmah", "Firdaus"], theme="packages"))
+                 detail=f"From {gbp(low)} per person · compare side by side", chips=["Sakinah", "Noor", "Rahmah", "Firdaus"], theme="packages"))
 
 
 def trips_ld():
@@ -799,7 +788,7 @@ def trips_ld():
             "@type": "TouristTrip", "name": f"{pkg_name(p)} · {route_label(p)} · Hajj 2027",
             "description": f'{p["days"]}-day Hajj 2027 journey, {c["name"]} collection. Maktab A, Zone 1.',
             "url": f"{BASE}packages.html#{p['id']}", "touristType": "Hajj pilgrims",
-            "offers": {"@type": "Offer", "price": p["pkr"][0], "priceCurrency": "PKR",
+            "offers": {"@type": "Offer", "price": p["gbp"][0], "priceCurrency": "GBP",
                        "availability": "https://schema.org/InStock", "url": f"{BASE}packages.html#{p['id']}"}}})
     return {"@context": "https://schema.org", "@type": "ItemList", "name": "Hajj 2027 packages", "itemListElement": items}
 
@@ -823,45 +812,45 @@ SITES_UMRAH = [
 ]
 
 
-def chapters(items, start=1):
+def site_grid(items, start=1):
     out = []
     for i, (im, where, title, text) in enumerate(items):
-        out.append(f"""<section class="chapter">
-  <div class="chapter-sticky">
-    <div class="bg">{img(im, title, "100vw")}</div>
-    <div class="wrap chapter-copy">
-      <span class="num">{i + start:02d}</span>
-      <h2 class="display-l">{title}</h2>
-      <p>{text}</p>
-      <span class="chip where">{icon("pin")} {where}</span>
-    </div>
-  </div>
-</section>""")
-    return "".join(out)
+        out.append(f"""<article class="site" data-reveal>
+  <div class="media hover-zoom">{img(im, title, "(max-width: 760px) 100vw, 50vw")}</div>
+  <div class="site-copy"><span class="num">{i + start:02d} · {where}</span><h3>{title}</h3><p>{text}</p></div>
+</article>""")
+    return '<div class="site-grid" data-stagger>' + "".join(out) + "</div>"
 
 
 def build_gallery():
     body = f"""
-<section class="page-hero page-hero-plain">
+<section class="page-hero">
+  <div class="bg">{img("arafat", "Pilgrims on the plain of Arafat", "100vw", eager=True)}</div>
   <div class="wrap" data-enter>
-    <span class="eyebrow">Sacred sites</span>
+    <span class="eyebrow" style="color:var(--gold-2)">Sacred sites</span>
     <h1 class="display-xl" style="margin-top:18px">The places that <em>call you.</em></h1>
-    <p class="lead">Ten sites, from the Kaaba to the Prophet's Mosque ﷺ. Scroll slowly.</p>
+    <p class="lead">Ten sites, from the Kaaba to the Prophet's Mosque ﷺ.</p>
   </div>
 </section>
-<section class="section-tight" style="padding-top:0">
-  <div class="wrap"><p class="lit">The rites of <em>Hajj</em> unfold over five days and five places. Each one asks something different of you.</p></div>
-</section>
-{chapters(SITES_HAJJ)}
 <section class="section">
-  <div class="wrap"><p class="lit"><em>Umrah</em> can be made in any month, and centres on the Haram in Makkah, with a visit to Madinah.</p></div>
+  <div class="wrap">
+    <div class="head head-split"><div><span class="eyebrow" data-reveal>Hajj</span><h2 class="display-m" data-lines style="margin-top:14px">{lines("Five days, <em>five places.</em>")}</h2></div>
+    <p class="lead" data-reveal>8 to 13 Dhul Hijjah. <a class="link" href="guide-hajj-step-by-step.html">Hajj day by day {ARROW}</a></p></div>
+    {site_grid(SITES_HAJJ)}
+  </div>
 </section>
-{chapters(SITES_UMRAH, 6)}
-{cta_band("Ready to stand <em>here yourself?</em>", "Let us plan the journey that brings you to every one of these places.", "arafat")}
+<section class="section sand">
+  <div class="wrap">
+    <div class="head head-split"><div><span class="eyebrow" data-reveal>Umrah & Madinah</span><h2 class="display-m" data-lines style="margin-top:14px">{lines("Any month, <em>any year.</em>")}</h2></div>
+    <p class="lead" data-reveal>The Haram, then the city of the Prophet ﷺ. <a class="link" href="guide-first-umrah.html">Umrah step by step {ARROW}</a></p></div>
+    {site_grid(SITES_UMRAH, 6)}
+  </div>
+</section>
+{cta_band("Ready to stand <em>here yourself?</em>", "We'll plan the journey that brings you here.", "kaaba-tawaf")}
 """
     page("gallery.html", "Hajj & Umrah Sacred Sites | Sada-e-Rehmat",
          "Explore the sacred sites of Hajj and Umrah: the Kaaba, Mina, Arafat, Muzdalifah, the Jamarat, Maqam Ibrahim, Zamzam, Safa and Marwa and Masjid an-Nabawi.",
-         body, crumb=("Sacred sites",), priority=0.7,
+         body, dark_nav=True, crumb=("Sacred sites",), priority=0.7,
          og=dict(image="arafat", eyebrow="Sacred sites", title="The places that call you.",
                  detail="Ten sites, from the Kaaba to the Prophet's Mosque ﷺ", chips=["Mina", "Arafat", "Muzdalifah", "Jamarat", "Madinah"], theme="sites"))
 
@@ -881,9 +870,7 @@ def build_about():
              ("Confirm in writing", "Hotels, dates, rooms and terms, before any payment."),
              ("Prepare together", "Briefings on the rites, packing and health before you fly."),
              ("Travel with us", "Our team meets you and stays with your group throughout.")]
-    frames = [("type", "نِيَّة", "Intention"), ("img", "holy-kaaba"), ("type", "وَثَائِق", "Documents"),
-              ("type", "عَهْد", "In writing"), ("img", "mina-tents"), ("img", "kaaba-tawaf")]
-    about_steps = [(t, f"Step 0{i+1}", t, d, frames[i], None) for i, (t, d) in enumerate(steps)]
+    st = "".join(f'<div class="step" data-reveal><b>0{i+1}</b><h3>{t}</h3><p>{d}</p></div>' for i, (t, d) in enumerate(steps))
     team = [("D", "Director", "Sets the direction and the standard of care for every pilgrimage."),
             ("C", "Co-founder", "Building a more human, transparent way to plan sacred travel."),
             ("S", "Sohail", "Co-founder, leading operations and the pilgrim experience."),
@@ -902,9 +889,8 @@ def build_about():
 
 <section class="section">
   <div class="wrap">
-    <p class="lit">We began with a simple conviction: the journey of a lifetime deserves to be organised with <em>care, clarity and devotion.</em> A small team of guides has grown into a full pilgrimage service trusted by thousands of families.</p>
-  </div>
-  <div class="wrap" style="margin-top:clamp(72px,9vw,120px)">
+    <div class="head head-split" style="margin-bottom:clamp(40px,5vw,64px)"><h2 class="display-m" data-lines>{lines("Care, clarity", "<em>and devotion.</em>")}</h2>
+    <p class="lead" data-reveal>A small team of guides that grew into a full pilgrimage service, trusted by thousands of families.</p></div>
     <div class="stats" data-stagger>
       <div class="stat" data-reveal><strong data-count="15000" data-suffix="+">15,000+</strong><span>Pilgrims guided</span></div>
       <div class="stat" data-reveal><strong data-count="12">12</strong><span>Years of service</span></div>
@@ -920,7 +906,7 @@ def build_about():
     <div class="split-copy">
       <span class="eyebrow" data-reveal>What we stand for</span>
       <h2 class="display-m" data-lines>{lines("Four promises,", "<em>kept on every journey.</em>")}</h2>
-      <p data-reveal>Pilgrimage is an act of worship, not a holiday. Our job is to carry the logistics so you can carry your intention.</p>
+      <p data-reveal>We carry the logistics, so you can carry your intention.</p>
     </div>
   </div>
   <div class="wrap" style="margin-top:clamp(56px,7vw,96px)"><div class="values" data-stagger>{vals}</div></div>
@@ -932,7 +918,7 @@ def build_about():
       <div><span class="eyebrow" data-reveal>How it works</span><h2 class="display-l" data-lines style="margin-top:18px">{lines("From intention", "<em>to confirmation.</em>")}</h2></div>
       <p class="lead" data-reveal>Six steps, and a named person beside you at each one.</p>
     </div>
-    {scrolly(about_steps, dark=True, aria="How it works")}
+    <div class="steps" data-stagger>{st}</div>
   </div>
 </section>
 
@@ -1018,14 +1004,14 @@ def build_contact():
   <div class="wrap">
     <div class="head head-split">
       <div><span class="eyebrow" data-reveal>After you press send</span><h2 class="display-l" data-lines style="margin-top:18px">{lines("What happens", "<em>next.</em>")}</h2></div>
-      <p class="lead" data-reveal>No call centre, no pressure. Four steps from your message to a confirmed journey.</p>
+      <p class="lead" data-reveal>No call centre, no pressure.</p>
     </div>
-    {scrolly([
-        ("Within one working day", "Step 01", "A specialist replies", "A named member of our team in Feltham or Rawalpindi reads your message and replies by phone or email, in English or Urdu.", ("type", "السَّلَامُ عَلَيْكُم", "We reply within a working day"), ["Phone or email", "English or Urdu"]),
-        ("A recommendation", "Step 02", "One journey, explained", "We recommend one journey for your dates, budget and family, and explain why, including hotels, Maktab, room sharing and what is not included.", ("img", "holy-kaaba"), ["Hotels by name", "Exclusions listed"]),
-        ("Paperwork", "Step 03", "Documents, visas and vaccines", "We give you a clear checklist: passport validity, visa route, Nusuk, and the meningitis ACWY certificate at least 10 days before arrival.", ("img", "safa-marwa"), ["Passport", "Visa", "ACWY"]),
-        ("Confirmation", "Step 04", "Everything in writing", "You receive your itinerary in Gregorian and Hijri dates, with terms, before any payment. Then we prepare you for the rites.", ("img", "kaaba-tawaf"), ["Written itinerary", "Pre-departure briefing"]),
-    ], aria="What happens after you enquire")}
+    <div class="steps steps-light" data-stagger>
+      <div class="step" data-reveal><b>01</b><h3>We reply</h3><p>Within one working day, by phone or email, in English or Urdu.</p></div>
+      <div class="step" data-reveal><b>02</b><h3>One recommendation</h3><p>A journey for your dates and budget, with hotels named and exclusions listed.</p></div>
+      <div class="step" data-reveal><b>03</b><h3>Paperwork</h3><p>A checklist: passport, visa route, Nusuk, and the ACWY certificate.</p></div>
+      <div class="step" data-reveal><b>04</b><h3>In writing</h3><p>Your itinerary and terms in writing, before any payment.</p></div>
+    </div>
   </div>
 </section>
 
@@ -1052,23 +1038,14 @@ def build_contact():
 def build_guides():
     filt = '<div class="hub-filter" role="group" aria-label="Filter guides"><button aria-pressed="true" data-cat="all">All guides</button>' + \
         "".join(f'<button aria-pressed="false" data-cat="{k}">{v}</button>' for k, v in CATS.items()) + "</div>"
-    plan = scrolly([
-        ("6+ months before", "Six months out", "Check passports and choose your route",
-         'Passports need six months\' validity (for Pakistan\'s Hajj 2027 scheme, until 16 November 2027). Decide Hajj or Umrah, and how you will book: <a href="guide-hajj-uk.html">Nusuk Hajj from the UK</a> or <a href="guide-hajj-pakistan.html">the scheme in Pakistan</a>.',
-         ("img", "holy-kaaba"), ["Passport", "Route"]),
-        ("3 months before", "Three months out", "Book, then apply for your visa",
-         'Compare packages by Maktab, hotels and exclusions (<a href="guide-choosing.html">our checklist</a>), then sort your <a href="guide-umrah-visa.html">visa</a> and Nusuk account.',
-         ("img", "maqam-ibrahim"), ["Package", "Visa", "Nusuk"]),
-        ("6–8 weeks before", "Six weeks out", "Vaccines and fitness",
-         'Get your meningitis ACWY vaccine (at least 10 days before arrival, ideally much earlier), and start walking every day. <a href="guide-health.html">Health guide</a>.',
-         ("img", "zamzam"), ["ACWY", "Walk daily"]),
-        ("2 weeks before", "Two weeks out", "Learn the rites and pack",
-         'Read <a href="guide-first-umrah.html">Umrah step by step</a> and <a href="guide-hajj-step-by-step.html">Hajj day by day</a>, learn the <a href="guide-duas.html">duas</a>, and work through the <a href="guide-packing.html">packing list</a>.',
-         ("img", "kaaba-tawaf"), ["Rites", "Duas", "Packing"]),
-        ("On the flight", "Travel day", "Ihram before the Miqat",
-         'If you fly to Jeddah, you must be in Ihram before landing. <a href="guide-miqat.html">Where is the Miqat on my flight?</a>',
-         ("type", "لَبَّيْكَ", "Labbayk Allāhumma ʿumrah"), ["Ihram", "Talbiyah"]),
-    ], aria="Your pilgrimage plan")
+    plan_items = [
+        ("6 months before", "Passports and route", 'Six months\' validity. Book via <a href="guide-hajj-uk.html">Nusuk Hajj (UK)</a> or <a href="guide-hajj-pakistan.html">Pakistan\'s scheme</a>.'),
+        ("3 months before", "Package and visa", '<a href="guide-choosing.html">Compare packages</a>, then sort your <a href="guide-umrah-visa.html">visa and Nusuk</a>.'),
+        ("6 weeks before", "Vaccines and walking", 'ACWY at least 10 days before arrival. <a href="guide-health.html">Health guide</a>.'),
+        ("2 weeks before", "Rites and packing", '<a href="guide-first-umrah.html">Umrah</a>, <a href="guide-duas.html">duas</a>, <a href="guide-packing.html">packing list</a>.'),
+        ("On the flight", "Ihram before the Miqat", '<a href="guide-miqat.html">When to put on Ihram</a>.'),
+    ]
+    plan = '<ol class="plan" data-stagger>' + "".join(f'<li data-reveal><span>{w}</span><h3>{t}</h3><p>{d}</p></li>' for w, t, d in plan_items) + '</ol>'
     hub_ld = {"@context": "https://schema.org", "@type": "CollectionPage", "name": "Hajj and Umrah guides", "url": BASE + "guides.html",
               "hasPart": [{"@type": "Article", "headline": GUIDE[g]["title"], "url": f"{BASE}{g}.html"} for g in GUIDE_ORDER]}
     body = f"""
@@ -1096,7 +1073,7 @@ def build_guides():
     <div class="split-copy">
       <span class="eyebrow" data-reveal>A helpful reminder</span>
       <h2 class="display-m" data-lines>{lines("Official guidance", "<em>comes first.</em>")}</h2>
-      <p data-reveal>Rules, visa routes, health requirements and Hajj booking arrangements change from season to season. We check our guides regularly, but always confirm with the official Saudi, UK and Pakistani sources for your passport and dates.</p>
+      <p data-reveal>Rules change each season. Always confirm with the official sources for your passport and dates.</p>
       <div class="actions" data-reveal><a class="btn btn-ghost" href="https://www.nusuk.sa/" target="_blank" rel="noopener">Nusuk ↗</a><a class="btn btn-ghost" href="https://www.gov.uk/foreign-travel-advice/saudi-arabia/pilgrimage" target="_blank" rel="noopener">UK FCDO ↗</a><a class="btn btn-ghost" href="https://www.mora.gov.pk/" target="_blank" rel="noopener">Pakistan MoRA ↗</a></div>
     </div>
     <div class="media" data-parallax data-clip>{img("jamarat", "Pilgrims at the Jamarat", "(max-width: 860px) 100vw, 50vw")}</div>
@@ -1120,7 +1097,11 @@ def build_guide(g):
     toc = [("tldr", "In short")]
     steps_html = ""
     if g.get("scrolly"):
-        steps_html = f'<section id="steps"><h2>Step by step</h2><div class="guide-scrolly">{scrolly(g["scrolly"], aria=strip(g["h1"]))}</div></section>'
+        if slug in ("guide-first-umrah", "guide-hajj-step-by-step"):
+            inner = f'<div class="guide-scrolly">{scrolly(g["scrolly"], aria=strip(g["h1"]))}</div>'
+        else:
+            inner = '<ol class="steps-list">' + "".join(f'<li><h3>{st[2]}</h3><p>{st[3]}</p></li>' for st in g["scrolly"]) + '</ol>'
+        steps_html = f'<section id="steps"><h2>Step by step</h2>{inner}</section>'
         toc.append(("steps", "Step by step"))
     toc += [(sid, h) for sid, h, _ in secs]
     if g["faqs"]:
@@ -1169,7 +1150,7 @@ def build_guide(g):
   <div class="wrap guide-layout">
     <aside class="guide-rail">
       <div><h4>On this page</h4><nav aria-label="On this page">{rail}</nav></div>
-      <div class="rail-card"><strong>Planning Hajj 2027?</strong><p>Maktab A, Zone 1, from Rs 21,95,000 per person.</p><a class="btn btn-sm btn-light" href="packages.html">See journeys {ARROW}</a></div>
+      <div class="rail-card"><strong>Planning Hajj 2027?</strong><p>Maktab A, Zone 1, from £5,935 per person.</p><a class="btn btn-sm btn-light" href="packages.html">See journeys {ARROW}</a></div>
     </aside>
     <article class="guide-body">
       {tldr}

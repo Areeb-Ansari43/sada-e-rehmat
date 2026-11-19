@@ -31,22 +31,6 @@
   };
 
   /* ---------- Split helpers ---------- */
-  $$('.lit').forEach(el => {
-    const walk = node => {
-      Array.from(node.childNodes).forEach(n => {
-        if (n.nodeType === 3) {
-          const frag = document.createDocumentFragment();
-          n.textContent.split(/(\s+)/).forEach(part => {
-            if (!part) return;
-            if (/^\s+$/.test(part)) frag.appendChild(document.createTextNode(part));
-            else { const s = document.createElement('span'); s.className = 'w'; s.textContent = part; frag.appendChild(s); }
-          });
-          n.replaceWith(frag);
-        } else if (n.nodeType === 1) walk(n);
-      });
-    };
-    walk(el);
-  });
   $$('[data-lines]').forEach(el => {
     $$('.ln > span', el).forEach((s, i) => s.style.setProperty('--i', i));
   });
@@ -92,7 +76,6 @@
   const stacks = $$('.stack-card');
   const hss = $$('.hs');
   const chapters = $$('.chapter');
-  const lits = $$('.lit');
   const wide = () => window.matchMedia('(min-width: 761px)').matches;
 
   const sizeHs = () => {
@@ -167,14 +150,6 @@
       $('.chapter-sticky', ch).style.setProperty('--c', c.toFixed(4));
     });
 
-    lits.forEach(el => {
-      const r = el.getBoundingClientRect();
-      if (r.bottom < 0 || r.top > vh) return;
-      const words = el._w || (el._w = $$('.w', el));
-      const p = clamp((vh * .85 - r.top) / (r.height + vh * .35));
-      const lit = Math.round(p * words.length);
-      words.forEach((w, i) => w.classList.toggle('on', i < lit));
-    });
   };
 
   let ticking = false;
@@ -183,7 +158,6 @@
   window.addEventListener('resize', () => { vh = window.innerHeight; sizeHs(); frame(); });
   window.addEventListener('load', () => { sizeHs(); frame(); });
   sizeHs(); frame();
-  if (reduce) lits.forEach(el => $$('.w', el).forEach(w => w.classList.add('on')));
 
   /* ---------- Segmented controls ---------- */
   const placeThumb = seg => {
@@ -209,10 +183,11 @@
   const explorer = $('[data-explorer]');
   if (explorer) {
     const store = { get: k => { try { return localStorage.getItem(k); } catch (e) { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} } };
-    const state = { room: store.get('ser-room') || 'quad', cur: store.get('ser-cur') || 'pkr', route: 'all' };
-    const fmtPKR = n => 'Rs ' + Number(n).toLocaleString('en-IN');
+    const savedCur = store.get('ser-cur');
+    const state = { room: store.get('ser-room') || 'quad', cur: savedCur === 'usd' ? 'usd' : 'gbp', route: 'all' };
+    const fmtGBP = n => '£' + Number(n).toLocaleString('en-GB');
     const fmtUSD = n => '$' + Number(n).toLocaleString('en-US');
-    const fmt = (n, c) => c === 'pkr' ? fmtPKR(n) : fmtUSD(n);
+    const fmt = (n, c) => c === 'gbp' ? fmtGBP(n) : fmtUSD(n);
     const tween = (el, to, cur) => {
       const from = parseFloat(el.dataset.v || 0);
       el.dataset.v = to;
@@ -222,18 +197,18 @@
       const step = t => {
         const k = clamp((t - t0) / dur); const e = 1 - Math.pow(1 - k, 3);
         const v = from + (to - from) * e;
-        el.textContent = fmt(cur === 'pkr' ? Math.round(v / 1000) * 1000 : Math.round(v / 5) * 5, cur);
+        el.textContent = fmt(Math.round(v / 5) * 5, cur);
         if (k < 1) requestAnimationFrame(step); else el.textContent = fmt(to, cur);
       };
       requestAnimationFrame(step);
     };
     const render = () => {
-      const other = state.cur === 'pkr' ? 'usd' : 'pkr';
+      const other = state.cur === 'gbp' ? 'usd' : 'gbp';
       $$('[data-price]').forEach(card => {
         const d = card.dataset;
         const main = $('.amount', card); const alt = $('.alt', card); const lbl = $('.room-label', card);
         tween(main, +d[state.room + state.cur.charAt(0).toUpperCase() + state.cur.slice(1)], state.cur);
-        alt.textContent = '≈ ' + fmt(d[state.room + other.charAt(0).toUpperCase() + other.slice(1)], other) + ' per person';
+        alt.textContent = '≈ ' + fmt(d[state.room + other.charAt(0).toUpperCase() + other.slice(1)], other);
         if (lbl) lbl.textContent = { quad: 'Quad room', triple: 'Triple room', double: 'Double room' }[state.room] + ' · per person';
       });
       $$('[data-cell]').forEach(td => {
@@ -252,7 +227,47 @@
         const note = $('.empty-note', sec); if (note) note.classList.toggle('show', shown === 0);
       });
       $$('.compare tbody tr').forEach(tr => { tr.style.display = state.route === 'all' || tr.dataset.route === state.route ? '' : 'none'; });
+      renderCompare();
     };
+
+    /* Compare up to three journeys side by side */
+    const cmpData = (() => { try { return JSON.parse($('#cmp-data').textContent); } catch (e) { return []; } })();
+    const byId = Object.fromEntries(cmpData.map(p => [p.id, p]));
+    const slots = $$('.cmp-pick select');
+    const grid = $('.cmp-grid');
+    const ROOMS = ['quad', 'triple', 'double'];
+    const ROWS = [['Length', p => p.days], ['Arrive', p => p.arrive], ['Depart', p => p.depart],
+      ['Makkah hotel', p => p.makkah], ['Makkah dates', p => p.makkahDates], ['Madinah hotel', p => p.madinah], ['Madinah dates', p => p.madinahDates],
+      ['Aziziya', p => p.aziziya], ['Hajj days', () => 'Maktab A · Zone 1 · 14–18 May'], ['Train', p => 'Haramain · ' + p.train], ['Madinah upgrade', p => p.upgrade]];
+    function renderCompare() {
+      if (!grid || !slots.length) return;
+      const picks = slots.map(s => byId[s.value]).filter(Boolean);
+      const ri = ROOMS.indexOf(state.room);
+      const roomName = { quad: 'Quad', triple: 'Triple', double: 'Double' }[state.room];
+      const other = state.cur === 'gbp' ? 'usd' : 'gbp';
+      grid.innerHTML = picks.map(p => {
+        const rows = ROWS.map(([label, get]) => {
+          const diff = picks.length > 1 && new Set(picks.map(get)).size > 1;
+          return `<div class="${diff ? 'diff' : ''}"><dt>${label}</dt><dd>${get(p)}</dd></div>`;
+        }).join('');
+        return `<article class="cmp-col" style="--dot:var(--t-${p.tid})">
+          <div class="cmp-head"><small>${p.tier} · ${p.route}</small><h3>${p.name}</h3></div>
+          <div class="cmp-price"><small>${roomName} room · per person</small><div class="amount">${fmt(p[state.cur][ri], state.cur)}</div><small>≈ ${fmt(p[other][ri], other)}</small></div>
+          <dl class="cmp-rows">${rows}</dl>
+          <a class="btn" href="contact.html?package=${p.id}">Enquire about ${p.name}</a>
+        </article>`;
+      }).join('');
+      $$('[data-compare]').forEach(b => b.classList.toggle('on', slots.some(s => s.value === b.dataset.compare)));
+    }
+    slots.forEach(s => s.addEventListener('change', renderCompare));
+    let nextSlot = 0;
+    $$('[data-compare]').forEach(b => b.addEventListener('click', () => {
+      const id = b.dataset.compare;
+      if (!slots.some(s => s.value === id)) { slots[nextSlot % slots.length].value = id; nextSlot++; }
+      renderCompare();
+      const target = $('#compare');
+      if (target) target.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth' });
+    }));
     const sync = (name, val) => {
       $$(`.seg[data-name="${name}"] button`).forEach(b => b.setAttribute('aria-pressed', String(b.dataset.value === val)));
       $$(`.seg[data-name="${name}"]`).forEach(placeThumb);
