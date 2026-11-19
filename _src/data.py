@@ -1,0 +1,239 @@
+"""Hajj 2027 (Category A) package data, transcribed from the operator's rate sheet.
+
+The twelve sheet packages (PKG 01-12, Silver/Gold/Platinum/Diamond) are regrouped
+into four named collections. `sheet` keeps the original package number for
+reference when talking to the operations team.
+"""
+
+SWISS = ("Swissôtel Makkah or Swiss Al Maqam", "Makkah")
+MAYSAN = ("Maysan Al Harithia", "Madinah")
+SHAZA = ("Shaza Regency Plaza", "Madinah")
+
+COLLECTIONS = [
+    {
+        "id": "sakinah",
+        "name": "Sakinah",
+        "arabic": "سَكِينَة",
+        "meaning": "Tranquillity",
+        "sheet_tier": "Silver",
+        "image": "madinah",
+        "line": "Everything Hajj asks of you, nothing it doesn't.",
+        "about": "Our most focused journeys. You stay in Aziziya on full board, close to Mina, with a private-room stay at Shaza Regency Plaza in Madinah. Ideal for first-time pilgrims and families who want Maktab A without the five-star price.",
+        "hotels": ["Aziziya · full board", "Shaza Regency Plaza · full board"],
+    },
+    {
+        "id": "noor",
+        "name": "Noor",
+        "arabic": "نُور",
+        "meaning": "Light",
+        "sheet_tier": "Gold",
+        "image": "holy-kaaba",
+        "line": "Nights beside the Haram, before and after the days of Hajj.",
+        "about": "Adds a Makkah hotel stay at Swissôtel or Swiss Al Maqam, steps from Masjid al-Haram, so you can pray in the Haram before the days of Hajj begin. Choose 10, 17 or 22 days.",
+        "hotels": ["Swissôtel / Swiss Al Maqam", "Maysan Al Harithia or Shaza Regency", "Aziziya · full board"],
+    },
+    {
+        "id": "rahmah",
+        "name": "Rahmah",
+        "arabic": "رَحْمَة",
+        "meaning": "Mercy",
+        "sheet_tier": "Platinum",
+        "image": "maqam-ibrahim",
+        "line": "Both holy cities at a gentler pace.",
+        "about": "Swissôtel in Makkah and Maysan Al Harithia in Madinah on every journey, with more nights in each city. The longest option arrives on 28 April for over three weeks in the Haramain.",
+        "hotels": ["Swissôtel / Swiss Al Maqam", "Maysan Al Harithia", "Aziziya · full board"],
+    },
+    {
+        "id": "firdaus",
+        "name": "Firdaus",
+        "arabic": "فِرْدَوْس",
+        "meaning": "The highest garden",
+        "sheet_tier": "Diamond",
+        "image": "zamzam",
+        "line": "Four nights in Makkah before Hajj. No compromise after it.",
+        "about": "Our finest collection. You spend the four nights before Hajj at Swissôtel by the Haram instead of Aziziya, then Maysan Al Harithia in Madinah — the most time in the Haram of any 14-day journey.",
+        "hotels": ["Swissôtel / Swiss Al Maqam · 4 nights", "Maysan Al Harithia", "Aziziya · full board"],
+    },
+]
+
+# Stop kinds: arrive, madinah, makkah, aziziya, hajj, depart
+def S(kind, label, greg, hijri):
+    return {"kind": kind, "label": label, "greg": greg, "hijri": hijri}
+
+COMMON_HAJJ = [
+    S("hajj", "Five days of Hajj · Mina, Arafat, Muzdalifah", "14–18 May", "8–12 Dhul Hijjah"),
+    S("aziziya", "Aziziya", "18–19 May", "12–13 Dhul Hijjah"),
+]
+
+PACKAGES = [
+    # ---------------- Sakinah (Silver) ----------------
+    dict(id="sakinah-10-madinah", sheet=1, tier="sakinah", days="10", route="madinah",
+         makkah=None, madinah=(SHAZA, "Full board"),
+         train="Madinah → Makkah",
+         stops=[S("arrive", "Arrive in Madinah", "10 May", "4 Dhul Hijjah"),
+                S("madinah", "Shaza Regency Plaza, Madinah", "10–11 May", "4–5 Dhul Hijjah"),
+                S("aziziya", "Aziziya", "12–13 May", "6–7 Dhul Hijjah"),
+                *COMMON_HAJJ,
+                S("depart", "Depart from Jeddah", "20 May", "14 Dhul Hijjah")],
+         pkr=(2195000, 2215000, 2225000), usd=(7895, 7970, 8005),
+         upgrade=dict(pkr=(75000, 95000, 105000), usd=(270, 345, 380))),
+    dict(id="sakinah-14-madinah", sheet=4, tier="sakinah", days="13–14", route="madinah",
+         makkah=None, madinah=(SHAZA, "Full board"),
+         train="Madinah → Makkah",
+         stops=[S("arrive", "Arrive in Madinah", "7 May", "1 Dhul Hijjah"),
+                S("madinah", "Shaza Regency Plaza, Madinah", "7–9 May", "1–3 Dhul Hijjah"),
+                S("aziziya", "Aziziya", "10–13 May", "4–7 Dhul Hijjah"),
+                *COMMON_HAJJ,
+                S("depart", "Depart from Jeddah", "20 May", "14 Dhul Hijjah")],
+         pkr=(2295000, 2345000, 2415000), usd=(8255, 8435, 8690),
+         upgrade=dict(pkr=(130000, 155000, 210000), usd=(470, 560, 760))),
+    dict(id="sakinah-14-makkah", sheet=3, tier="sakinah", days="13–14", route="makkah",
+         makkah=None, madinah=(SHAZA, "Full board"),
+         train="Makkah → Madinah",
+         stops=[S("arrive", "Arrive in Makkah", "10 May", "4 Dhul Hijjah"),
+                S("aziziya", "Aziziya", "10–13 May", "4–7 Dhul Hijjah"),
+                *COMMON_HAJJ,
+                S("madinah", "Shaza Regency Plaza, Madinah", "20–22 May", "14–16 Dhul Hijjah"),
+                S("depart", "Depart from Madinah", "23 May", "17 Dhul Hijjah")],
+         pkr=(2295000, 2345000, 2415000), usd=(8255, 8435, 8690),
+         upgrade=dict(pkr=(115000, 145000, 200000), usd=(415, 525, 720))),
+
+    # ---------------- Noor (Gold) ----------------
+    dict(id="noor-10-madinah", sheet=2, tier="noor", days="10", route="madinah",
+         makkah=(SWISS, "Half board"), madinah=(MAYSAN, "Half board"),
+         train="Madinah → Makkah",
+         stops=[S("arrive", "Arrive in Madinah", "10 May", "4 Dhul Hijjah"),
+                S("madinah", "Maysan Al Harithia, Madinah", "10–11 May", "4–5 Dhul Hijjah"),
+                S("makkah", "Swissôtel / Swiss Al Maqam, Makkah", "12–13 May", "6–7 Dhul Hijjah"),
+                *COMMON_HAJJ,
+                S("depart", "Depart from Jeddah", "20 May", "14 Dhul Hijjah")],
+         pkr=(2475000, 2525000, 2585000), usd=(8905, 9085, 9300), upgrade=None),
+    dict(id="noor-17-madinah", sheet=9, tier="noor", days="17", route="madinah",
+         makkah=(SWISS, "Half board"), madinah=(MAYSAN, "Half board"),
+         train="Madinah → Makkah",
+         stops=[S("arrive", "Arrive in Madinah", "4 May", "27 Dhul Qa'dah"),
+                S("madinah", "Maysan Al Harithia, Madinah", "4–6 May", "27–29 Dhul Qa'dah"),
+                S("makkah", "Swissôtel / Swiss Al Maqam, Makkah", "7–9 May", "1–3 Dhul Hijjah"),
+                S("aziziya", "Aziziya", "10–13 May", "4–7 Dhul Hijjah"),
+                *COMMON_HAJJ,
+                S("depart", "Depart from Jeddah", "20 May", "14 Dhul Hijjah")],
+         pkr=(2475000, 2545000, 2645000), usd=(8905, 9155, 9515), upgrade=None),
+    dict(id="noor-17-makkah", sheet=10, tier="noor", days="17", route="makkah",
+         makkah=(SWISS, "Full board"), madinah=(SHAZA, "Half board"),
+         train="Makkah → Madinah",
+         stops=[S("arrive", "Arrive in Makkah", "7 May", "1 Dhul Hijjah"),
+                S("makkah", "Swissôtel / Swiss Al Maqam, Makkah", "7–9 May", "1–3 Dhul Hijjah"),
+                S("aziziya", "Aziziya", "10–13 May", "4–7 Dhul Hijjah"),
+                *COMMON_HAJJ,
+                S("madinah", "Shaza Regency Plaza, Madinah", "20–22 May", "14–16 Dhul Hijjah"),
+                S("depart", "Depart from Madinah", "23 May", "17 Dhul Hijjah")],
+         pkr=(2475000, 2525000, 2665000), usd=(8905, 9085, 9590),
+         upgrade=dict(pkr=(115000, 145000, 200000), usd=(415, 525, 720))),
+    dict(id="noor-22-makkah", sheet=11, tier="noor", days="22", route="makkah",
+         makkah=(SWISS, "Half board"), madinah=(SHAZA, "Full board"),
+         train="Makkah → Madinah",
+         stops=[S("arrive", "Arrive in Makkah", "3 May", "26 Dhul Qa'dah"),
+                S("makkah", "Swissôtel / Swiss Al Maqam, Makkah", "3–9 May", "26 Dhul Qa'dah – 3 Dhul Hijjah"),
+                S("aziziya", "Aziziya", "10–13 May", "4–7 Dhul Hijjah"),
+                *COMMON_HAJJ,
+                S("madinah", "Shaza Regency Plaza, Madinah", "20–22 May", "14–16 Dhul Hijjah"),
+                S("depart", "Depart from Madinah", "23 May", "17 Dhul Hijjah")],
+         pkr=(2615000, 2715000, 2875000), usd=(9410, 9770, 10345),
+         upgrade=dict(pkr=(115000, 145000, 200000), usd=(415, 525, 720))),
+
+    # ---------------- Rahmah (Platinum) ----------------
+    dict(id="rahmah-14-madinah", sheet=5, tier="rahmah", days="14", route="madinah",
+         makkah=(SWISS, "Half board"), madinah=(MAYSAN, "Half board"),
+         train="Madinah → Makkah",
+         stops=[S("arrive", "Arrive in Madinah", "7 May", "1 Dhul Hijjah"),
+                S("madinah", "Maysan Al Harithia, Madinah", "7–9 May", "1–3 Dhul Hijjah"),
+                S("makkah", "Swissôtel / Swiss Al Maqam, Makkah", "10–11 May", "4–5 Dhul Hijjah"),
+                S("aziziya", "Aziziya", "12–13 May", "6–7 Dhul Hijjah"),
+                *COMMON_HAJJ,
+                S("depart", "Depart from Jeddah", "20 May", "14 Dhul Hijjah")],
+         pkr=(2645000, 2725000, 2915000), usd=(9515, 9805, 10485), upgrade=None),
+    dict(id="rahmah-14-makkah", sheet=6, tier="rahmah", days="14", route="makkah",
+         makkah=(SWISS, "Half board"), madinah=(MAYSAN, "Half board"),
+         train="Makkah → Madinah",
+         stops=[S("arrive", "Arrive in Makkah", "10 May", "4 Dhul Hijjah"),
+                S("makkah", "Swissôtel / Swiss Al Maqam, Makkah", "10–11 May", "4–5 Dhul Hijjah"),
+                S("aziziya", "Aziziya", "12–13 May", "6–7 Dhul Hijjah"),
+                *COMMON_HAJJ,
+                S("madinah", "Maysan Al Harithia, Madinah", "20–22 May", "14–16 Dhul Hijjah"),
+                S("depart", "Depart from Madinah", "23 May", "17 Dhul Hijjah")],
+         pkr=(2645000, 2725000, 2915000), usd=(9515, 9805, 10485), upgrade=None),
+    dict(id="rahmah-23-madinah", sheet=12, tier="rahmah", days="22–23", route="madinah",
+         makkah=(SWISS, "Half board"), madinah=(MAYSAN, "Half board"),
+         train="Madinah → Makkah",
+         stops=[S("arrive", "Arrive in Madinah", "28 April", "21 Dhul Qa'dah"),
+                S("madinah", "Maysan Al Harithia, Madinah", "28 April – 1 May", "21–24 Dhul Qa'dah"),
+                S("makkah", "Swissôtel / Swiss Al Maqam, Makkah", "2–9 May", "25 Dhul Qa'dah – 3 Dhul Hijjah"),
+                S("aziziya", "Aziziya", "10–13 May", "4–7 Dhul Hijjah"),
+                *COMMON_HAJJ,
+                S("depart", "Depart from Jeddah", "20 May", "14 Dhul Hijjah")],
+         pkr=(2675000, 2745000, 2915000), usd=(9625, 9875, 10485), upgrade=None),
+
+    # ---------------- Firdaus (Diamond) ----------------
+    dict(id="firdaus-14-makkah", sheet=7, tier="firdaus", days="14", route="makkah",
+         makkah=(SWISS, "Half board"), madinah=(MAYSAN, "Half board"),
+         train="Makkah → Madinah",
+         stops=[S("arrive", "Arrive in Makkah", "10 May", "4 Dhul Hijjah"),
+                S("makkah", "Swissôtel / Swiss Al Maqam, Makkah", "10–13 May", "4–7 Dhul Hijjah"),
+                *COMMON_HAJJ,
+                S("madinah", "Maysan Al Harithia, Madinah", "20–22 May", "14–16 Dhul Hijjah"),
+                S("depart", "Depart from Madinah", "23 May", "17 Dhul Hijjah")],
+         pkr=(2885000, 3055000, 3315000), usd=(10380, 10990, 11925), upgrade=None),
+    dict(id="firdaus-14-madinah", sheet=8, tier="firdaus", days="14", route="madinah",
+         makkah=(SWISS, "Half board"), madinah=(MAYSAN, "Half board"),
+         train="Madinah → Makkah",
+         stops=[S("arrive", "Arrive in Madinah", "7 May", "1 Dhul Hijjah"),
+                S("madinah", "Maysan Al Harithia, Madinah", "7–9 May", "1–3 Dhul Hijjah"),
+                S("makkah", "Swissôtel / Swiss Al Maqam, Makkah", "10–13 May", "4–7 Dhul Hijjah"),
+                *COMMON_HAJJ,
+                S("depart", "Depart from Jeddah", "20 May", "14 Dhul Hijjah")],
+         pkr=(2905000, 3035000, 3295000), usd=(10450, 10920, 11855), upgrade=None),
+]
+
+AZIZIYA_PRIVATE = dict(pkr=(50000, 135000, 280000), usd=(180, 485, 1005))
+
+INCLUDED = [
+    ("Maktab A, Zone 1", "The closest category to the Jamarat."),
+    ("Private buses", "Air-conditioned group coaches with built-in toilets."),
+    ("Gypsum-walled Mina tents", "Sofa-cum-beds, pillows and blankets, with the group's own washrooms."),
+    ("A/C marquees in Arafat", "Sofa mattresses in Mina and Arafat for real rest."),
+    ("Buffet meals", "In Mina and Arafat, and in Aziziya on full board."),
+    ("24-hour drinks & ice cream", "Hot and cold drinks in Aziziya, Mina and Arafat."),
+    ("Muzdalifah kit", "Carpet mats, sleeping bags and snack boxes."),
+    ("Attached bathrooms", "In every Aziziya room, close to Mina."),
+    ("Haramain high-speed train", "Between Makkah and Madinah, in the direction of your route."),
+]
+
+TERMS = [
+    ("Prices are per person", "and exclude airfare and Qurbani."),
+    ("Aziziya rooms are shared", "five beds, gender-segregated, unless you add a private room."),
+    ("Makkah and Madinah rooms are private", "at the occupancy you choose: quad, triple or double."),
+    ("Dates follow the Saudi Hijri calendar", "and may move by one day with the moon sighting and flight schedule."),
+    ("Group transport is by bus", "throughout the journey."),
+    ("The Maysan Al Harithia upgrade", "is on half board where it applies."),
+    ("Unused services are not refundable", "if a pilgrim chooses not to take them."),
+    ("All dates are tentative", "and confirmed in writing at booking."),
+]
+
+# ---------------------------------------------------------------------------
+# Sterling prices. The rate sheet is priced in PKR and USD; GBP is converted
+# from the USD price at USD_PER_GBP and rounded to the nearest £5. Update the
+# rate (and rebuild) when you reprice. Indicative until confirmed at booking.
+# ---------------------------------------------------------------------------
+USD_PER_GBP = 1.33
+RATE_NOTE = "£ prices are converted from US$ at $1.33 to £1 and confirmed at booking."
+
+
+def to_gbp(usd):
+    return tuple(int(round(u / USD_PER_GBP / 5.0) * 5) for u in usd)
+
+
+for _p in PACKAGES:
+    _p["gbp"] = to_gbp(_p["usd"])
+    if _p["upgrade"]:
+        _p["upgrade"]["gbp"] = to_gbp(_p["upgrade"]["usd"])
+AZIZIYA_PRIVATE["gbp"] = to_gbp(AZIZIYA_PRIVATE["usd"])
